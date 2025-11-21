@@ -3,6 +3,7 @@
 // found in the LICENSE file.
 
 @import AVFoundation;
+@import AVKit;
 @import video_player_avfoundation;
 @import XCTest;
 

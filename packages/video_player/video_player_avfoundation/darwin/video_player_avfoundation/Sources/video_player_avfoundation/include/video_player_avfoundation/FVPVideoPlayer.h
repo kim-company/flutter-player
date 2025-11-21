@@ -35,12 +35,20 @@ NS_ASSUME_NONNULL_BEGIN
 @property(nonatomic, nullable) NSObject<FVPVideoEventListener> *eventListener;
 /// A block that will be called when dispose is called.
 @property(nonatomic, nullable, copy) void (^onDisposed)(void);
+/// Indicates whether picture-in-picture is currently active.
+@property(nonatomic) BOOL pictureInPictureStarted;
 
 /// Initializes a new instance of FVPVideoPlayer with the given AVPlayerItem, AV factory, and view
 /// provider.
 - (instancetype)initWithPlayerItem:(AVPlayerItem *)item
                          avFactory:(id<FVPAVFactory>)avFactory
                       viewProvider:(NSObject<FVPViewProvider> *)viewProvider;
+
+/// Sets whether to automatically start picture-in-picture when going to the background.
+- (void)setAutomaticallyStartPictureInPicture:(BOOL)enabled;
+
+/// Sets the overlay frame for picture-in-picture animation.
+- (void)setPictureInPictureOverlayFrame:(CGRect)frame;
 
 @end
 
