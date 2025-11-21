@@ -5,6 +5,8 @@
 #import "./include/video_player_avfoundation/FVPVideoPlayer.h"
 #import "./include/video_player_avfoundation/FVPVideoPlayer_Internal.h"
 
+#import <AVFoundation/AVFoundation.h>
+#import <AVKit/AVKit.h>
 #import <GLKit/GLKit.h>
 
 #import "./include/video_player_avfoundation/AVAssetTrackUtils.h"
@@ -65,6 +67,11 @@ static NSDictionary<NSString *, NSValue *> *FVPGetPlayerItemObservations(void) {
     @"playbackLikelyToKeepUp" : [NSValue valueWithPointer:playbackLikelyToKeepUpContext],
   };
 }
+
+API_AVAILABLE(macos(10.15), ios(9.0))
+@interface FVPVideoPlayer () <AVPictureInPictureControllerDelegate>
+@property(nonatomic) AVPictureInPictureController *pictureInPictureController;
+@end
 
 @implementation FVPVideoPlayer {
   // Whether or not player and player item listeners have ever been registered.
@@ -428,6 +435,42 @@ NS_INLINE CGFloat radiansToDegrees(CGFloat radians) {
   // `[AVPlayerItem duration]` can be `kCMTimeIndefinite`,
   // use `[[AVPlayerItem asset] duration]` instead.
   return FVPCMTimeToMillis([[[_player currentItem] asset] duration]);
+}
+
+#pragma mark - Picture in Picture
+
+- (void)setAutomaticallyStartPictureInPicture:(BOOL)enabled {
+  // Picture-in-picture is handled by FVPTextureBasedVideoPlayer for texture-based rendering.
+  // This is a stub implementation for the base FVPVideoPlayer class.
+}
+
+- (void)setPictureInPictureOverlayFrame:(CGRect)frame {
+  // Picture-in-picture is handled by FVPTextureBasedVideoPlayer for texture-based rendering.
+  // This is a stub implementation for the base FVPVideoPlayer class.
+}
+
+- (void)setPictureInPictureOverlaySettings:(FVPSetPictureInPictureOverlaySettingsMessage *)input
+                                     error:(FlutterError *_Nullable *_Nonnull)error {
+  if (input.settings) {
+    [self setPictureInPictureOverlayFrame:CGRectMake(input.settings.left, input.settings.top,
+                                                      input.settings.width, input.settings.height)];
+  }
+}
+
+- (void)setAutomaticallyStartsPictureInPicture:
+            (FVPAutomaticallyStartsPictureInPictureMessage *)input
+                                          error:(FlutterError *_Nullable *_Nonnull)error {
+  [self setAutomaticallyStartPictureInPicture:input.enableStartPictureInPictureAutomaticallyFromInline];
+}
+
+- (void)startPictureInPicture:(FVPStartPictureInPictureMessage *)input
+                         error:(FlutterError *_Nullable *_Nonnull)error {
+  self.pictureInPictureStarted = YES;
+}
+
+- (void)stopPictureInPicture:(FVPStopPictureInPictureMessage *)input
+                        error:(FlutterError *_Nullable *_Nonnull)error {
+  self.pictureInPictureStarted = NO;
 }
 
 @end

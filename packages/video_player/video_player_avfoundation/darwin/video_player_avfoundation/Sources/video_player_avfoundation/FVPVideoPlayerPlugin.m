@@ -6,6 +6,7 @@
 #import "./include/video_player_avfoundation/FVPVideoPlayerPlugin_Test.h"
 
 #import <AVFoundation/AVFoundation.h>
+#import <AVKit/AVKit.h>
 
 #import "./include/video_player_avfoundation/FVPAVFactory.h"
 #import "./include/video_player_avfoundation/FVPDisplayLink.h"
@@ -34,7 +35,6 @@
   return [[FVPCoreVideoDisplayLink alloc] initWithRegistrar:registrar callback:callback];
 #endif
 }
-
 @end
 
 #pragma mark -
@@ -270,6 +270,30 @@ static void upgradeAudioSessionCategory(AVAudioSessionCategory requestedCategory
   AVURLAsset *asset = [AVURLAsset URLAssetWithURL:[NSURL URLWithString:options.uri]
                                           options:itemOptions];
   return [AVPlayerItem playerItemWithAsset:asset];
+}
+
+- (nullable NSNumber *)isPictureInPictureSupported:
+    (FlutterError *_Nullable __autoreleasing *_Nonnull)error {
+  if (@available(macOS 10.15, iOS 9.0, *)) {
+#if TARGET_OS_OSX
+    return @(AVPictureInPictureController.isPictureInPictureSupported);
+#else
+    return @((BOOL) (AVPictureInPictureController.isPictureInPictureSupported &&
+             [self configuredPictureInPictureBackgroundMode]));
+#endif
+  } else {
+    return @NO;
+  }
+}
+
+- (BOOL)configuredPictureInPictureBackgroundMode {
+#if TARGET_OS_IOS
+  id backgroundModes = [NSBundle.mainBundle objectForInfoDictionaryKey:@"UIBackgroundModes"];
+  return
+      [backgroundModes isKindOfClass:[NSArray class]] && [backgroundModes containsObject:@"audio"];
+#else
+  return YES;
+#endif
 }
 
 @end

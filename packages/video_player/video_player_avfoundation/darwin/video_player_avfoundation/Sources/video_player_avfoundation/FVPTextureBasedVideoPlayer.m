@@ -5,7 +5,10 @@
 #import "./include/video_player_avfoundation/FVPTextureBasedVideoPlayer.h"
 #import "./include/video_player_avfoundation/FVPTextureBasedVideoPlayer_Test.h"
 
-@interface FVPTextureBasedVideoPlayer ()
+#import <AVKit/AVKit.h>
+
+API_AVAILABLE(macos(10.15), ios(9.0))
+@interface FVPTextureBasedVideoPlayer () <AVPictureInPictureControllerDelegate>
 // The updater that drives callbacks to the engine to indicate that a new frame is ready.
 @property(nonatomic) FVPFrameUpdater *frameUpdater;
 // The display link that drives frameUpdater.
@@ -28,9 +31,13 @@
 // (e.g., after a seek while paused). If YES, the display link should continue to run until the next
 // frame is successfully provided.
 @property(nonatomic, assign) BOOL waitingForFrame;
+// The picture-in-picture controller.
+@property(nonatomic) AVPictureInPictureController *pictureInPictureController API_AVAILABLE(macos(10.15), ios(9.0));
 
 /// Ensures that the frame updater runs until a frame is rendered, regardless of play/pause state.
 - (void)expectFrame;
+/// Sets up the picture-in-picture controller.
+- (void)setUpPictureInPictureController API_AVAILABLE(macos(10.15), ios(9.0));
 @end
 
 @implementation FVPTextureBasedVideoPlayer
@@ -54,7 +61,18 @@
     // invisible AVPlayerLayer is used to overwrite the protection of pixel buffers in those streams
     // for issue #1, and restore the correct width and height for issue #2.
     _playerLayer = [AVPlayerLayer playerLayerWithPlayer:self.player];
+    // picture-in-picture shows a placeholder where the original video was playing.
+    // This is a native overlay that does not scroll with the rest of the Flutter UI.
+    // That is why we need to set the opacity of the overlay.
+    // Setting it to 0 would result in the picture-in-picture not working.
+    // Setting it to 1 would result in the picture-in-picture overlay always showing over other
+    // widgets. Setting it to 0.001 makes the placeholder invisible, but still allows the
+    // picture-in-picture.
+    _playerLayer.opacity = 0.001;
     [viewProvider.view.layer addSublayer:self.playerLayer];
+
+    // Configure Picture in Picture controller
+    [self setUpPictureInPictureController];
   }
   return self;
 }
@@ -206,6 +224,79 @@
       [self disposeWithError:&error];
     }
   });
+}
+
+#pragma mark - Picture in Picture
+
+/// Sets up the picture in picture controller and assigns the AVPictureInPictureControllerDelegate
+/// to the controller.
+- (void)setUpPictureInPictureController {
+  if (@available(macOS 10.15, iOS 9.0, *)) {
+    if (AVPictureInPictureController.isPictureInPictureSupported) {
+      self.pictureInPictureController =
+          [[AVPictureInPictureController alloc] initWithPlayerLayer:self.playerLayer];
+      [self setAutomaticallyStartPictureInPicture:NO];
+      _pictureInPictureController.delegate = self;
+    }
+  }
+}
+
+- (void)setAutomaticallyStartPictureInPicture:(BOOL)enabled {
+  if (!self.pictureInPictureController) return;
+#if TARGET_OS_IOS
+  if (@available(iOS 14.2, *)) {
+    self.pictureInPictureController.canStartPictureInPictureAutomaticallyFromInline = enabled;
+  }
+#endif
+}
+
+- (void)setPictureInPictureOverlayFrame:(CGRect)frame {
+  self.playerLayer.frame = frame;
+}
+
+- (void)setPictureInPictureStarted:(BOOL)startPictureInPicture {
+  if (@available(macOS 10.15, iOS 9.0, *)) {
+    if (!AVPictureInPictureController.isPictureInPictureSupported ||
+        self.pictureInPictureStarted == startPictureInPicture) {
+      return;
+    }
+  } else {
+    return;
+  }
+
+  [super setPictureInPictureStarted:startPictureInPicture];
+
+  if (self.pictureInPictureStarted && ![self.pictureInPictureController isPictureInPictureActive]) {
+    if (self.eventListener) {
+      // The event is sent here to make sure that the Flutter UI can be updated as soon as possible.
+      if (@available(macOS 10.15, iOS 9.0, *)) {
+        [self.eventListener videoPlayerDidStartPictureInPicture];
+      }
+    }
+    [self.pictureInPictureController startPictureInPicture];
+  } else if (!self.pictureInPictureStarted &&
+             [self.pictureInPictureController isPictureInPictureActive]) {
+    [self.pictureInPictureController stopPictureInPicture];
+  }
+}
+
+#pragma mark - AVPictureInPictureControllerDelegate
+
+- (void)pictureInPictureControllerDidStopPictureInPicture:
+    (AVPictureInPictureController *)pictureInPictureController API_AVAILABLE(macos(10.15), ios(9.0)) {
+  self.pictureInPictureStarted = NO;
+  if (self.eventListener) {
+    [self.eventListener videoPlayerDidStopPictureInPicture];
+  }
+}
+
+- (void)pictureInPictureControllerDidStartPictureInPicture:
+    (AVPictureInPictureController *)pictureInPictureController API_AVAILABLE(macos(10.15), ios(9.0)) {
+  self.pictureInPictureStarted = YES;
+  if (self.eventListener) {
+    [self.eventListener videoPlayerDidStartPictureInPicture];
+  }
+  [self updatePlayingState];
 }
 
 @end

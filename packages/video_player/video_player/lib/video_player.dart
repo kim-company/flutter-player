@@ -17,6 +17,7 @@ export 'package:video_player_platform_interface/video_player_platform_interface.
     show
         DataSourceType,
         DurationRange,
+        PictureInPictureOverlaySettings,
         VideoFormat,
         VideoPlayerOptions,
         VideoPlayerWebOptions,
@@ -55,6 +56,7 @@ class VideoPlayerValue {
     this.isPlaying = false,
     this.isLooping = false,
     this.isBuffering = false,
+    this.isPictureInPictureActive = false,
     this.volume = 1.0,
     this.playbackSpeed = 1.0,
     this.rotationCorrection = 0,
@@ -115,6 +117,9 @@ class VideoPlayerValue {
   /// The current speed of the playback.
   final double playbackSpeed;
 
+  /// True if picture-in-picture is currently active.
+  final bool isPictureInPictureActive;
+
   /// A description of the error if present.
   ///
   /// If [hasError] is false this is `null`.
@@ -169,6 +174,7 @@ class VideoPlayerValue {
     bool? isPlaying,
     bool? isLooping,
     bool? isBuffering,
+    bool? isPictureInPictureActive,
     double? volume,
     double? playbackSpeed,
     int? rotationCorrection,
@@ -186,6 +192,8 @@ class VideoPlayerValue {
       isPlaying: isPlaying ?? this.isPlaying,
       isLooping: isLooping ?? this.isLooping,
       isBuffering: isBuffering ?? this.isBuffering,
+      isPictureInPictureActive:
+          isPictureInPictureActive ?? this.isPictureInPictureActive,
       volume: volume ?? this.volume,
       playbackSpeed: playbackSpeed ?? this.playbackSpeed,
       rotationCorrection: rotationCorrection ?? this.rotationCorrection,
@@ -209,6 +217,7 @@ class VideoPlayerValue {
         'isPlaying: $isPlaying, '
         'isLooping: $isLooping, '
         'isBuffering: $isBuffering, '
+        'isPictureInPictureActive: $isPictureInPictureActive, '
         'volume: $volume, '
         'playbackSpeed: $playbackSpeed, '
         'errorDescription: $errorDescription, '
@@ -228,6 +237,7 @@ class VideoPlayerValue {
           isPlaying == other.isPlaying &&
           isLooping == other.isLooping &&
           isBuffering == other.isBuffering &&
+          isPictureInPictureActive == other.isPictureInPictureActive &&
           volume == other.volume &&
           playbackSpeed == other.playbackSpeed &&
           errorDescription == other.errorDescription &&
@@ -525,6 +535,10 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
           value = value.copyWith(isBuffering: true);
         case VideoEventType.bufferingEnd:
           value = value.copyWith(isBuffering: false);
+        case VideoEventType.startedPictureInPicture:
+          value = value.copyWith(isPictureInPictureActive: true);
+        case VideoEventType.stoppedPictureInPicture:
+          value = value.copyWith(isPictureInPictureActive: false);
         case VideoEventType.isPlayingStateUpdate:
           if (event.isPlaying ?? false) {
             value = value.copyWith(
@@ -649,6 +663,53 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
       return;
     }
     await _videoPlayerPlatform.setVolume(_playerId, value.volume);
+  }
+
+  /// Returns true if picture-in-picture is supported on the device.
+  Future<bool> isPictureInPictureSupported() =>
+      _videoPlayerPlatform.isPictureInPictureSupported();
+
+  /// Enables/disables starting picture-in-picture automatically when the app goes to the background.
+  Future<void> setAutomaticallyStartsPictureInPicture({
+    required bool enableStartPictureInPictureAutomaticallyFromInline,
+  }) async {
+    if (!value.isInitialized || _isDisposed) {
+      return;
+    }
+    await _videoPlayerPlatform.setAutomaticallyStartsPictureInPicture(
+      textureId: _playerId,
+      enableStartPictureInPictureAutomaticallyFromInline:
+          enableStartPictureInPictureAutomaticallyFromInline,
+    );
+  }
+
+  /// Sets the location of the video player view in order to animate the picture-in-picture view.
+  Future<void> setPictureInPictureOverlaySettings({
+    required PictureInPictureOverlaySettings settings,
+  }) async {
+    if (!value.isInitialized || _isDisposed) {
+      return;
+    }
+    await _videoPlayerPlatform.setPictureInPictureOverlaySettings(
+      textureId: _playerId,
+      settings: settings,
+    );
+  }
+
+  /// Starts picture-in-picture mode.
+  Future<void> startPictureInPicture() async {
+    if (!value.isInitialized || _isDisposed) {
+      return;
+    }
+    await _videoPlayerPlatform.startPictureInPicture(_playerId);
+  }
+
+  /// Stops picture-in-picture mode.
+  Future<void> stopPictureInPicture() async {
+    if (!value.isInitialized || _isDisposed) {
+      return;
+    }
+    await _videoPlayerPlatform.stopPictureInPicture(_playerId);
   }
 
   Future<void> _applyPlaybackSpeed() async {
