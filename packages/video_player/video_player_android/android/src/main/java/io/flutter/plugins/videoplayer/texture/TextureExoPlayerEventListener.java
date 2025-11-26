@@ -48,7 +48,8 @@ public final class TextureExoPlayerEventListener extends ExoPlayerEventListener 
         }
       }
     }
-    events.onInitialized(width, height, exoPlayer.getDuration(), rotationCorrection.getDegrees());
+    boolean isLive = exoPlayer.isCurrentMediaItemDynamic();
+    events.onInitialized(width, height, exoPlayer.getDuration(), rotationCorrection.getDegrees(), isLive);
   }
 
   @OptIn(markerClass = androidx.media3.common.util.UnstableApi.class)
