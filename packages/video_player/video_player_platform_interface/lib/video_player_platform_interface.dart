@@ -100,6 +100,11 @@ abstract class VideoPlayerPlatform extends PlatformInterface {
     throw UnimplementedError('getPosition() has not been implemented.');
   }
 
+  /// Returns whether the video is a live stream.
+  Future<bool> isLive(int playerId) {
+    throw UnimplementedError('isLive() has not been implemented.');
+  }
+
   /// Returns a widget displaying the video with a given playerId.
   @Deprecated('Use buildViewWithOptions() instead.')
   Widget buildView(int playerId) {
@@ -261,7 +266,7 @@ class VideoEvent {
   /// The [eventType] argument is required.
   ///
   /// Depending on the [eventType], the [duration], [size],
-  /// [rotationCorrection], and [buffered] arguments can be null.
+  /// [rotationCorrection], [isLive], and [buffered] arguments can be null.
   // TODO(stuartmorgan): Temporarily suppress warnings about not using const
   // in all of the other video player packages, fix this, and then update
   // the other packages to use const.
@@ -273,6 +278,7 @@ class VideoEvent {
     this.rotationCorrection,
     this.buffered,
     this.isPlaying,
+    this.isLive,
   });
 
   /// The type of the event.
@@ -303,6 +309,11 @@ class VideoEvent {
   /// Only used if [eventType] is [VideoEventType.isPlayingStateUpdate].
   final bool? isPlaying;
 
+  /// Whether the video is a live stream.
+  ///
+  /// Only used if [eventType] is [VideoEventType.initialized].
+  final bool? isLive;
+
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
@@ -313,7 +324,8 @@ class VideoEvent {
             size == other.size &&
             rotationCorrection == other.rotationCorrection &&
             listEquals(buffered, other.buffered) &&
-            isPlaying == other.isPlaying;
+            isPlaying == other.isPlaying &&
+            isLive == other.isLive;
   }
 
   @override
@@ -324,6 +336,7 @@ class VideoEvent {
     rotationCorrection,
     buffered,
     isPlaying,
+    isLive,
   );
 }
 
