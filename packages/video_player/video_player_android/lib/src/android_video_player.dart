@@ -198,6 +198,11 @@ class AndroidVideoPlayer extends VideoPlayerPlatform {
   }
 
   @override
+  Future<bool> isLive(int playerId) async {
+    return _playerWith(id: playerId).isLive();
+  }
+
+  @override
   Stream<VideoEvent> videoEventsFor(int playerId) {
     return _playerWith(id: playerId).videoEvents();
   }
@@ -303,6 +308,10 @@ class _PlayerInstance {
     return Duration(milliseconds: await _api.getCurrentPosition());
   }
 
+  Future<bool> isLive() async {
+    return _api.isLive();
+  }
+
   Stream<VideoEvent> videoEvents() {
     return _eventStreamController.stream;
   }
@@ -357,6 +366,7 @@ class _PlayerInstance {
             duration: Duration(milliseconds: event.duration),
             size: Size(event.width.toDouble(), event.height.toDouble()),
             rotationCorrection: event.rotationCorrection,
+            isLive: event.isLive,
           ),
         );
 

@@ -62,6 +62,7 @@ class VideoPlayerValue {
     this.rotationCorrection = 0,
     this.errorDescription,
     this.isCompleted = false,
+    this.isLive = false,
   });
 
   /// Returns an instance for a video that hasn't been loaded.
@@ -137,6 +138,14 @@ class VideoPlayerValue {
   /// Degrees to rotate the video (clockwise) so it is displayed correctly.
   final int rotationCorrection;
 
+  /// Whether the video is a live stream.
+  ///
+  /// This is determined at initialization by checking if the underlying asset
+  /// has an indefinite duration (iOS) or is a dynamic media item (Android).
+  /// For HLS live streams with DVR, this will be true even though [duration]
+  /// represents the seekable window length.
+  final bool isLive;
+
   /// Indicates whether or not the video has been loaded and is ready to play.
   final bool isInitialized;
 
@@ -180,6 +189,7 @@ class VideoPlayerValue {
     int? rotationCorrection,
     String? errorDescription = _defaultErrorDescription,
     bool? isCompleted,
+    bool? isLive,
   }) {
     return VideoPlayerValue(
       duration: duration ?? this.duration,
@@ -201,6 +211,7 @@ class VideoPlayerValue {
           ? errorDescription
           : this.errorDescription,
       isCompleted: isCompleted ?? this.isCompleted,
+      isLive: isLive ?? this.isLive,
     );
   }
 
@@ -221,7 +232,8 @@ class VideoPlayerValue {
         'volume: $volume, '
         'playbackSpeed: $playbackSpeed, '
         'errorDescription: $errorDescription, '
-        'isCompleted: $isCompleted),';
+        'isCompleted: $isCompleted, '
+        'isLive: $isLive)';
   }
 
   @override
@@ -244,7 +256,8 @@ class VideoPlayerValue {
           size == other.size &&
           rotationCorrection == other.rotationCorrection &&
           isInitialized == other.isInitialized &&
-          isCompleted == other.isCompleted;
+          isCompleted == other.isCompleted &&
+          isLive == other.isLive;
 
   @override
   int get hashCode => Object.hash(
@@ -263,6 +276,7 @@ class VideoPlayerValue {
     rotationCorrection,
     isInitialized,
     isCompleted,
+    isLive,
   );
 }
 
@@ -507,6 +521,7 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
             isInitialized: event.duration != null,
             errorDescription: null,
             isCompleted: false,
+            isLive: event.isLive ?? false,
           );
           assert(
             !initializingCompleter.isCompleted,
@@ -600,7 +615,7 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
   /// has been sent to the platform, not when playback itself is totally
   /// finished.
   Future<void> play() async {
-    if (value.position == value.duration) {
+    if (value.isCompleted && value.position == value.duration) {
       await seekTo(Duration.zero);
     }
     value = value.copyWith(isPlaying: true);
@@ -646,6 +661,12 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
           return;
         }
         _updatePosition(newPosition);
+
+        // Check if isLive status has changed
+        final bool newIsLive = await _videoPlayerPlatform.isLive(_playerId);
+        if (newIsLive != value.isLive) {
+          value = value.copyWith(isLive: newIsLive);
+        }
       });
 
       // This ensures that the correct playback speed is always applied when
@@ -864,10 +885,16 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
     if (position > value.duration) {
       position = value.duration;
     }
+    if (position < Duration.zero) {
+      position = Duration.zero;
+    }
     value = value.copyWith(
       position: position,
       caption: _getCaptionAt(position),
-      isCompleted: position == value.duration,
+      // Note: isCompleted is NOT set here. It should only be set by the
+      // VideoEventType.completed event from the platform, which properly
+      // indicates when AVPlayerItemDidPlayToEndTimeNotification fires.
+      // For livestreams, this event never fires, so isCompleted stays false.
     );
   }
 

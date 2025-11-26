@@ -111,6 +111,8 @@ abstract class VideoPlayerInstanceApi {
   void play();
   @ObjCSelector('position')
   int getPosition();
+  @ObjCSelector('isLive')
+  bool getIsLive();
   @async
   @ObjCSelector('seekTo:')
   void seekTo(int position);

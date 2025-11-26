@@ -35,6 +35,9 @@ class InitializationEvent extends PlatformVideoEvent {
 
   /// The rotation that should be applied during playback.
   late final int rotationCorrection;
+
+  /// Whether the video is a live stream.
+  late final bool isLive;
 }
 
 /// Sent when the video state changes.
@@ -111,6 +114,9 @@ abstract class VideoPlayerInstanceApi {
 
   /// Returns the current buffer position, in milliseconds.
   int getBufferedPosition();
+
+  /// Returns whether the video is a live stream.
+  bool isLive();
 }
 
 @EventChannelApi()

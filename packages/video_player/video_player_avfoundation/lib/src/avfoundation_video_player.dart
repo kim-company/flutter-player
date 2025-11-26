@@ -172,6 +172,11 @@ class AVFoundationVideoPlayer extends VideoPlayerPlatform {
   }
 
   @override
+  Future<bool> isLive(int playerId) async {
+    return _playerWith(id: playerId).getIsLive();
+  }
+
+  @override
   Stream<VideoEvent> videoEventsFor(int playerId) {
     return _eventChannelFor(playerId).receiveBroadcastStream().map((
       dynamic event,
@@ -185,6 +190,7 @@ class AVFoundationVideoPlayer extends VideoPlayerPlatform {
             (map['width'] as num?)?.toDouble() ?? 0.0,
             (map['height'] as num?)?.toDouble() ?? 0.0,
           ),
+          isLive: map['isLive'] as bool?,
         ),
         'completed' => VideoEvent(eventType: VideoEventType.completed),
         'bufferingUpdate' => VideoEvent(
