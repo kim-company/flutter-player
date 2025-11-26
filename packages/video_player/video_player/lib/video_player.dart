@@ -586,7 +586,7 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
   /// has been sent to the platform, not when playback itself is totally
   /// finished.
   Future<void> play() async {
-    if (value.position == value.duration) {
+    if (value.isCompleted && value.position == value.duration) {
       await seekTo(Duration.zero);
     }
     value = value.copyWith(isPlaying: true);
@@ -803,10 +803,16 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
     if (position > value.duration) {
       position = value.duration;
     }
+    if (position < Duration.zero) {
+      position = Duration.zero;
+    }
     value = value.copyWith(
       position: position,
       caption: _getCaptionAt(position),
-      isCompleted: position == value.duration,
+      // Note: isCompleted is NOT set here. It should only be set by the
+      // VideoEventType.completed event from the platform, which properly
+      // indicates when AVPlayerItemDidPlayToEndTimeNotification fires.
+      // For livestreams, this event never fires, so isCompleted stays false.
     );
   }
 
