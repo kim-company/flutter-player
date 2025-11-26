@@ -70,12 +70,13 @@
 
 #pragma mark FVPVideoEventListener
 
-- (void)videoPlayerDidInitializeWithDuration:(int64_t)duration size:(CGSize)size {
+- (void)videoPlayerDidInitializeWithDuration:(int64_t)duration size:(CGSize)size isLive:(BOOL)isLive {
   [self sendOrQueue:@{
     @"event" : @"initialized",
     @"duration" : @(duration),
     @"width" : @(size.width),
-    @"height" : @(size.height)
+    @"height" : @(size.height),
+    @"isLive" : @(isLive)
   }];
 }
 

@@ -116,6 +116,11 @@ public abstract class VideoPlayer implements VideoPlayerInstanceApi {
   }
 
   @Override
+  public boolean isLive() {
+    return exoPlayer.isCurrentMediaItemDynamic();
+  }
+
+  @Override
   public void seekTo(long position) {
     exoPlayer.seekTo(position);
   }

@@ -40,6 +40,7 @@ public final class PlatformViewExoPlayerEventListener extends ExoPlayerEventList
       rotationCorrection = RotationDegrees.fromDegrees(0);
     }
 
-    events.onInitialized(width, height, exoPlayer.getDuration(), rotationCorrection.getDegrees());
+    boolean isLive = exoPlayer.isCurrentMediaItemDynamic();
+    events.onInitialized(width, height, exoPlayer.getDuration(), rotationCorrection.getDegrees(), isLive);
   }
 }

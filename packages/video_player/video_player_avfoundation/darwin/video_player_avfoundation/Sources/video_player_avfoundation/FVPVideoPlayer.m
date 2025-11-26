@@ -370,7 +370,8 @@ NS_INLINE CGFloat radiansToDegrees(CGFloat radians) {
 
   _isInitialized = YES;
   [self.eventListener videoPlayerDidInitializeWithDuration:self.duration
-                                                      size:currentItem.presentationSize];
+                                                      size:currentItem.presentationSize
+                                                    isLive:self.isLive];
 }
 
 #pragma mark - FVPVideoPlayerInstanceApi
@@ -404,6 +405,10 @@ NS_INLINE CGFloat radiansToDegrees(CGFloat radians) {
   }
 
   return @(FVPCMTimeToMillis(currentTime));
+}
+
+- (nullable NSNumber *)isLive:(FlutterError *_Nullable *_Nonnull)error {
+  return @([self isLive]);
 }
 
 - (void)seekTo:(NSInteger)position completion:(void (^)(FlutterError *_Nullable))completion {
@@ -507,6 +512,11 @@ NS_INLINE CGFloat radiansToDegrees(CGFloat radians) {
   }
 
   return FVPCMTimeToMillis(assetDuration);
+}
+
+- (BOOL)isLive {
+  CMTime assetDuration = [[[_player currentItem] asset] duration];
+  return CMTIME_IS_INDEFINITE(assetDuration);
 }
 
 @end
