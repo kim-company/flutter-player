@@ -386,16 +386,80 @@ NS_INLINE CGFloat radiansToDegrees(CGFloat radians) {
 }
 
 - (nullable NSNumber *)position:(FlutterError *_Nullable *_Nonnull)error {
-  return @(FVPCMTimeToMillis([_player currentTime]));
+  CMTime currentTime = [_player currentTime];
+  AVPlayerItem *item = [_player currentItem];
+
+  // For HLS livestreams with indefinite duration, report position relative to the seekable window
+  if (item && CMTIME_IS_INDEFINITE([[item asset] duration]) && item.seekableTimeRanges.count > 0) {
+    NSValue *firstRange = [item.seekableTimeRanges firstObject];
+    CMTimeRange range = [firstRange CMTimeRangeValue];
+    CMTime seekableStart = range.start;
+
+    // Position = current time - start of seekable window
+    CMTime relativePosition = CMTimeSubtract(currentTime, seekableStart);
+    if (CMTIME_COMPARE_INLINE(relativePosition, <, kCMTimeZero)) {
+      relativePosition = kCMTimeZero;
+    }
+    return @(FVPCMTimeToMillis(relativePosition));
+  }
+
+  return @(FVPCMTimeToMillis(currentTime));
 }
 
 - (void)seekTo:(NSInteger)position completion:(void (^)(FlutterError *_Nullable))completion {
+  AVPlayerItem *item = [_player currentItem];
   CMTime targetCMTime = CMTimeMake(position, 1000);
-  CMTimeValue duration = _player.currentItem.asset.duration.value;
+  BOOL seekingToEnd = NO;
+
+  if (item) {
+    CMTime assetDuration = [[item asset] duration];
+    if (CMTIME_IS_INDEFINITE(assetDuration) && item.seekableTimeRanges.count > 0) {
+      // For livestreams: Position is relative to the seekable window.
+      // The seekable window slides forward over time, so we need to clamp
+      // the target to the current seekable range.
+      NSValue *firstRange = [item.seekableTimeRanges firstObject];
+      CMTimeRange range = [firstRange CMTimeRangeValue];
+      CMTime seekableStart = range.start;
+      CMTime seekableEnd = CMTimeRangeGetEnd(range);
+      CMTime seekableDuration = range.duration;
+
+      // Calculate absolute target time
+      CMTime relativeTarget = targetCMTime;
+      if (CMTIME_COMPARE_INLINE(relativeTarget, <, kCMTimeZero)) {
+        relativeTarget = kCMTimeZero;
+      }
+      if (CMTIME_IS_NUMERIC(seekableDuration) &&
+          CMTIME_COMPARE_INLINE(relativeTarget, >=, seekableDuration)) {
+        relativeTarget = seekableDuration;
+        seekingToEnd = YES;
+      }
+      CMTime absoluteTarget = CMTimeAdd(seekableStart, relativeTarget);
+
+      // Clamp to the current seekable range (in case the window has moved)
+      if (CMTIME_COMPARE_INLINE(absoluteTarget, <, seekableStart)) {
+        absoluteTarget = seekableStart;
+      }
+      if (CMTIME_COMPARE_INLINE(absoluteTarget, >, seekableEnd)) {
+        absoluteTarget = seekableEnd;
+        seekingToEnd = YES;
+      }
+
+      targetCMTime = absoluteTarget;
+    } else if (!CMTIME_IS_INDEFINITE(assetDuration)) {
+      if (CMTIME_COMPARE_INLINE(targetCMTime, <, kCMTimeZero)) {
+        targetCMTime = kCMTimeZero;
+      }
+      if (CMTIME_COMPARE_INLINE(targetCMTime, >=, assetDuration)) {
+        targetCMTime = assetDuration;
+        seekingToEnd = YES;
+      }
+    }
+  }
+
   // Without adding tolerance when seeking to duration,
   // seekToTime will never complete, and this call will hang.
   // see issue https://github.com/flutter/flutter/issues/124475.
-  CMTime tolerance = position == duration ? CMTimeMake(1, 1000) : kCMTimeZero;
+  CMTime tolerance = seekingToEnd ? CMTimeMake(1, 1000) : kCMTimeZero;
   [_player seekToTime:targetCMTime
         toleranceBefore:tolerance
          toleranceAfter:tolerance
@@ -427,7 +491,22 @@ NS_INLINE CGFloat radiansToDegrees(CGFloat radians) {
   // Note: https://openradar.appspot.com/radar?id=4968600712511488
   // `[AVPlayerItem duration]` can be `kCMTimeIndefinite`,
   // use `[[AVPlayerItem asset] duration]` instead.
-  return FVPCMTimeToMillis([[[_player currentItem] asset] duration]);
+  CMTime assetDuration = [[[_player currentItem] asset] duration];
+
+  // For HLS livestreams, asset duration is often indefinite.
+  // In this case, use seekableTimeRanges to get the length of the seekable window.
+  if (CMTIME_IS_INDEFINITE(assetDuration)) {
+    AVPlayerItem *item = [_player currentItem];
+    if (item && item.seekableTimeRanges.count > 0) {
+      // Get the last seekable time range (the current live window)
+      NSValue *lastRange = [item.seekableTimeRanges lastObject];
+      CMTimeRange range = [lastRange CMTimeRangeValue];
+      // Return the duration (length) of the seekable range, not the end time
+      return FVPCMTimeToMillis(range.duration);
+    }
+  }
+
+  return FVPCMTimeToMillis(assetDuration);
 }
 
 @end
