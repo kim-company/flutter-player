@@ -435,7 +435,12 @@ NS_INLINE CGFloat radiansToDegrees(CGFloat radians) {
       }
       if (CMTIME_IS_NUMERIC(seekableDuration) &&
           CMTIME_COMPARE_INLINE(relativeTarget, >=, seekableDuration)) {
-        relativeTarget = seekableDuration;
+        // Seek slightly before the end to avoid out-of-range errors
+        // Subtract 1ms to ensure we're within the valid range
+        relativeTarget = CMTimeSubtract(seekableDuration, CMTimeMake(1, 1000));
+        if (CMTIME_COMPARE_INLINE(relativeTarget, <, kCMTimeZero)) {
+          relativeTarget = kCMTimeZero;
+        }
         seekingToEnd = YES;
       }
       CMTime absoluteTarget = CMTimeAdd(seekableStart, relativeTarget);
@@ -444,8 +449,12 @@ NS_INLINE CGFloat radiansToDegrees(CGFloat radians) {
       if (CMTIME_COMPARE_INLINE(absoluteTarget, <, seekableStart)) {
         absoluteTarget = seekableStart;
       }
-      if (CMTIME_COMPARE_INLINE(absoluteTarget, >, seekableEnd)) {
-        absoluteTarget = seekableEnd;
+      if (CMTIME_COMPARE_INLINE(absoluteTarget, >=, seekableEnd)) {
+        // Never seek exactly to or beyond the end - subtract a small amount
+        absoluteTarget = CMTimeSubtract(seekableEnd, CMTimeMake(1, 1000));
+        if (CMTIME_COMPARE_INLINE(absoluteTarget, <, seekableStart)) {
+          absoluteTarget = seekableStart;
+        }
         seekingToEnd = YES;
       }
 
