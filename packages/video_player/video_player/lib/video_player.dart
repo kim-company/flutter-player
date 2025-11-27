@@ -48,7 +48,7 @@ class VideoPlayerValue {
   const VideoPlayerValue({
     required this.duration,
     this.size = Size.zero,
-    this.position = Duration.zero,
+    this.position,
     this.caption = Caption.none,
     this.captionOffset = Duration.zero,
     this.buffered = const <DurationRange>[],
@@ -87,7 +87,10 @@ class VideoPlayerValue {
   final Duration duration;
 
   /// The current playback position.
-  final Duration position;
+  /// Will be `null` until the first valid position update is received from the platform.
+  /// This is particularly useful for live streams where the initial position may be
+  /// unreliable during player initialization.
+  final Duration? position;
 
   /// The [Caption] that should be displayed based on the current [position].
   ///
@@ -840,8 +843,8 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
   ///
   /// If no [closedCaptionFile] was specified, this will always return an empty
   /// [Caption].
-  Caption _getCaptionAt(Duration position) {
-    if (_closedCaptionFile == null) {
+  Caption _getCaptionAt(Duration? position) {
+    if (_closedCaptionFile == null || position == null) {
       return Caption.none;
     }
 
@@ -1110,6 +1113,7 @@ class _VideoScrubberState extends State<VideoScrubber> {
       },
       onHorizontalDragEnd: (DragEndDetails details) {
         if (_controllerWasPlaying &&
+            controller.value.position != null &&
             controller.value.position != controller.value.duration) {
           controller.play();
         }
@@ -1199,7 +1203,7 @@ class _VideoProgressIndicatorState extends State<VideoProgressIndicator> {
     final Widget progressIndicator;
     if (controller.value.isInitialized) {
       final int duration = controller.value.duration.inMilliseconds;
-      final int position = controller.value.position.inMilliseconds;
+      final int position = controller.value.position?.inMilliseconds ?? 0;
 
       final double maxBuffering = duration == 0.0
           ? 0.0
