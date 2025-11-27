@@ -16,6 +16,9 @@ import java.util.Objects;
 public final class TextureExoPlayerEventListener extends ExoPlayerEventListener {
   private final boolean surfaceProducerHandlesCropAndRotation;
 
+  // HLS buffer duration to exclude from reported duration (matches iOS behavior)
+  private static final long HLS_BUFFER_MS = 18000; // 18 seconds
+
   public TextureExoPlayerEventListener(
       @NonNull ExoPlayer exoPlayer,
       @NonNull VideoPlayerCallbacks events,
@@ -49,7 +52,7 @@ public final class TextureExoPlayerEventListener extends ExoPlayerEventListener 
       }
     }
     boolean isLive = exoPlayer.isCurrentMediaItemDynamic();
-    events.onInitialized(width, height, exoPlayer.getDuration(), rotationCorrection.getDegrees(), isLive);
+    events.onInitialized(width, height, getDuration(), rotationCorrection.getDegrees(), isLive);
   }
 
   @OptIn(markerClass = androidx.media3.common.util.UnstableApi.class)
@@ -59,5 +62,24 @@ public final class TextureExoPlayerEventListener extends ExoPlayerEventListener 
   private int getRotationCorrectionFromFormat(ExoPlayer exoPlayer) {
     Format videoFormat = Objects.requireNonNull(exoPlayer.getVideoFormat());
     return videoFormat.rotationDegrees;
+  }
+
+  /**
+   * Gets the duration of the video, excluding HLS buffer.
+   * For HLS livestreams, subtracts the buffer duration from the total duration.
+   * This matches the iOS implementation behavior.
+   */
+  private long getDuration() {
+    // For HLS livestreams, the total duration includes the buffer.
+    // Subtract the HLS buffer to get the actual seekable duration.
+    if (exoPlayer.isCurrentMediaItemDynamic()) {
+      long totalDuration = exoPlayer.getDuration();
+      if (totalDuration != androidx.media3.common.C.TIME_UNSET) {
+        return Math.max(0, totalDuration - HLS_BUFFER_MS);
+      }
+    }
+
+    // For non-live content, use the standard duration
+    return exoPlayer.getDuration();
   }
 }
