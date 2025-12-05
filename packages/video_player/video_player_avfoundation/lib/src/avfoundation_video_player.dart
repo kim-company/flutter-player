@@ -309,6 +309,22 @@ class _PlayerInstance {
     return await _api.getIsLive();
   }
 
+  Future<void> setAutomaticallyStartsPictureInPicture(
+    AutomaticallyStartsPictureInPictureMessage msg,
+  ) =>
+      _api.setAutomaticallyStartsPictureInPicture(msg);
+
+  Future<void> setPictureInPictureOverlaySettings(
+    SetPictureInPictureOverlaySettingsMessage msg,
+  ) =>
+      _api.setPictureInPictureOverlaySettings(msg);
+
+  Future<void> startPictureInPicture(StartPictureInPictureMessage msg) =>
+      _api.startPictureInPicture(msg);
+
+  Future<void> stopPictureInPicture(StopPictureInPictureMessage msg) =>
+      _api.stopPictureInPicture(msg);
+
   Stream<VideoEvent> get videoEvents {
     _eventSubscription ??= _eventChannel.receiveBroadcastStream().listen(
       _onStreamEvent,
