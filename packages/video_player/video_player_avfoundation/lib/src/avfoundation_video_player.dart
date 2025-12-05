@@ -184,6 +184,57 @@ class AVFoundationVideoPlayer extends VideoPlayerPlatform {
   }
 
   @override
+  Future<bool> isPictureInPictureSupported() {
+    return _api.isPictureInPictureSupported();
+  }
+
+  @override
+  Future<void> setAutomaticallyStartsPictureInPicture({
+    required int textureId,
+    required bool enableStartPictureInPictureAutomaticallyFromInline,
+  }) {
+    return _playerWith(id: textureId).setAutomaticallyStartsPictureInPicture(
+      AutomaticallyStartsPictureInPictureMessage(
+        textureId: textureId,
+        enableStartPictureInPictureAutomaticallyFromInline:
+            enableStartPictureInPictureAutomaticallyFromInline,
+      ),
+    );
+  }
+
+  @override
+  Future<void> setPictureInPictureOverlaySettings({
+    required int textureId,
+    required PictureInPictureOverlaySettings settings,
+  }) {
+    return _playerWith(id: textureId).setPictureInPictureOverlaySettings(
+      SetPictureInPictureOverlaySettingsMessage(
+        textureId: textureId,
+        settings: PictureInPictureOverlaySettingsMessage(
+          top: settings.rect.top,
+          left: settings.rect.left,
+          width: settings.rect.width,
+          height: settings.rect.height,
+        ),
+      ),
+    );
+  }
+
+  @override
+  Future<void> startPictureInPicture(int textureId) {
+    return _playerWith(
+      id: textureId,
+    ).startPictureInPicture(StartPictureInPictureMessage(textureId: textureId));
+  }
+
+  @override
+  Future<void> stopPictureInPicture(int textureId) {
+    return _playerWith(
+      id: textureId,
+    ).stopPictureInPicture(StopPictureInPictureMessage(textureId: textureId));
+  }
+
+  @override
   Widget buildView(int playerId) {
     return buildViewWithOptions(VideoViewOptions(playerId: playerId));
   }
@@ -297,6 +348,12 @@ class _PlayerInstance {
       ),
       'bufferingStart' => VideoEvent(eventType: VideoEventType.bufferingStart),
       'bufferingEnd' => VideoEvent(eventType: VideoEventType.bufferingEnd),
+      'stoppedPictureInPicture' => VideoEvent(
+        eventType: VideoEventType.stoppedPictureInPicture,
+      ),
+      'startedPictureInPicture' => VideoEvent(
+        eventType: VideoEventType.startedPictureInPicture,
+      ),
       'isPlayingStateUpdate' => VideoEvent(
         eventType: VideoEventType.isPlayingStateUpdate,
         isPlaying: map['isPlaying'] as bool,

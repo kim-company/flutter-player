@@ -42,6 +42,36 @@ static id GetNullableObjectAtIndex(NSArray<id> *array, NSInteger key) {
 - (NSArray<id> *)toList;
 @end
 
+@interface FVPAutomaticallyStartsPictureInPictureMessage ()
++ (FVPAutomaticallyStartsPictureInPictureMessage *)fromList:(NSArray<id> *)list;
++ (nullable FVPAutomaticallyStartsPictureInPictureMessage *)nullableFromList:(NSArray<id> *)list;
+- (NSArray<id> *)toList;
+@end
+
+@interface FVPSetPictureInPictureOverlaySettingsMessage ()
++ (FVPSetPictureInPictureOverlaySettingsMessage *)fromList:(NSArray<id> *)list;
++ (nullable FVPSetPictureInPictureOverlaySettingsMessage *)nullableFromList:(NSArray<id> *)list;
+- (NSArray<id> *)toList;
+@end
+
+@interface FVPPictureInPictureOverlaySettingsMessage ()
++ (FVPPictureInPictureOverlaySettingsMessage *)fromList:(NSArray<id> *)list;
++ (nullable FVPPictureInPictureOverlaySettingsMessage *)nullableFromList:(NSArray<id> *)list;
+- (NSArray<id> *)toList;
+@end
+
+@interface FVPStartPictureInPictureMessage ()
++ (FVPStartPictureInPictureMessage *)fromList:(NSArray<id> *)list;
++ (nullable FVPStartPictureInPictureMessage *)nullableFromList:(NSArray<id> *)list;
+- (NSArray<id> *)toList;
+@end
+
+@interface FVPStopPictureInPictureMessage ()
++ (FVPStopPictureInPictureMessage *)fromList:(NSArray<id> *)list;
++ (nullable FVPStopPictureInPictureMessage *)nullableFromList:(NSArray<id> *)list;
+- (NSArray<id> *)toList;
+@end
+
 @interface FVPTexturePlayerIds ()
 + (FVPTexturePlayerIds *)fromList:(NSArray<id> *)list;
 + (nullable FVPTexturePlayerIds *)nullableFromList:(NSArray<id> *)list;
@@ -94,6 +124,131 @@ static id GetNullableObjectAtIndex(NSArray<id> *array, NSInteger key) {
 }
 @end
 
+@implementation FVPAutomaticallyStartsPictureInPictureMessage
++ (instancetype)makeWithTextureId:(NSInteger )textureId
+    enableStartPictureInPictureAutomaticallyFromInline:(BOOL )enableStartPictureInPictureAutomaticallyFromInline {
+  FVPAutomaticallyStartsPictureInPictureMessage* pigeonResult = [[FVPAutomaticallyStartsPictureInPictureMessage alloc] init];
+  pigeonResult.textureId = textureId;
+  pigeonResult.enableStartPictureInPictureAutomaticallyFromInline = enableStartPictureInPictureAutomaticallyFromInline;
+  return pigeonResult;
+}
++ (FVPAutomaticallyStartsPictureInPictureMessage *)fromList:(NSArray<id> *)list {
+  FVPAutomaticallyStartsPictureInPictureMessage *pigeonResult = [[FVPAutomaticallyStartsPictureInPictureMessage alloc] init];
+  pigeonResult.textureId = [GetNullableObjectAtIndex(list, 0) integerValue];
+  pigeonResult.enableStartPictureInPictureAutomaticallyFromInline = [GetNullableObjectAtIndex(list, 1) boolValue];
+  return pigeonResult;
+}
++ (nullable FVPAutomaticallyStartsPictureInPictureMessage *)nullableFromList:(NSArray<id> *)list {
+  return (list) ? [FVPAutomaticallyStartsPictureInPictureMessage fromList:list] : nil;
+}
+- (NSArray<id> *)toList {
+  return @[
+    @(self.textureId),
+    @(self.enableStartPictureInPictureAutomaticallyFromInline),
+  ];
+}
+@end
+
+@implementation FVPSetPictureInPictureOverlaySettingsMessage
++ (instancetype)makeWithTextureId:(NSInteger )textureId
+    settings:(nullable FVPPictureInPictureOverlaySettingsMessage *)settings {
+  FVPSetPictureInPictureOverlaySettingsMessage* pigeonResult = [[FVPSetPictureInPictureOverlaySettingsMessage alloc] init];
+  pigeonResult.textureId = textureId;
+  pigeonResult.settings = settings;
+  return pigeonResult;
+}
++ (FVPSetPictureInPictureOverlaySettingsMessage *)fromList:(NSArray<id> *)list {
+  FVPSetPictureInPictureOverlaySettingsMessage *pigeonResult = [[FVPSetPictureInPictureOverlaySettingsMessage alloc] init];
+  pigeonResult.textureId = [GetNullableObjectAtIndex(list, 0) integerValue];
+  pigeonResult.settings = GetNullableObjectAtIndex(list, 1);
+  return pigeonResult;
+}
++ (nullable FVPSetPictureInPictureOverlaySettingsMessage *)nullableFromList:(NSArray<id> *)list {
+  return (list) ? [FVPSetPictureInPictureOverlaySettingsMessage fromList:list] : nil;
+}
+- (NSArray<id> *)toList {
+  return @[
+    @(self.textureId),
+    self.settings ?: [NSNull null],
+  ];
+}
+@end
+
+@implementation FVPPictureInPictureOverlaySettingsMessage
++ (instancetype)makeWithTop:(double )top
+    left:(double )left
+    width:(double )width
+    height:(double )height {
+  FVPPictureInPictureOverlaySettingsMessage* pigeonResult = [[FVPPictureInPictureOverlaySettingsMessage alloc] init];
+  pigeonResult.top = top;
+  pigeonResult.left = left;
+  pigeonResult.width = width;
+  pigeonResult.height = height;
+  return pigeonResult;
+}
++ (FVPPictureInPictureOverlaySettingsMessage *)fromList:(NSArray<id> *)list {
+  FVPPictureInPictureOverlaySettingsMessage *pigeonResult = [[FVPPictureInPictureOverlaySettingsMessage alloc] init];
+  pigeonResult.top = [GetNullableObjectAtIndex(list, 0) doubleValue];
+  pigeonResult.left = [GetNullableObjectAtIndex(list, 1) doubleValue];
+  pigeonResult.width = [GetNullableObjectAtIndex(list, 2) doubleValue];
+  pigeonResult.height = [GetNullableObjectAtIndex(list, 3) doubleValue];
+  return pigeonResult;
+}
++ (nullable FVPPictureInPictureOverlaySettingsMessage *)nullableFromList:(NSArray<id> *)list {
+  return (list) ? [FVPPictureInPictureOverlaySettingsMessage fromList:list] : nil;
+}
+- (NSArray<id> *)toList {
+  return @[
+    @(self.top),
+    @(self.left),
+    @(self.width),
+    @(self.height),
+  ];
+}
+@end
+
+@implementation FVPStartPictureInPictureMessage
++ (instancetype)makeWithTextureId:(NSInteger )textureId {
+  FVPStartPictureInPictureMessage* pigeonResult = [[FVPStartPictureInPictureMessage alloc] init];
+  pigeonResult.textureId = textureId;
+  return pigeonResult;
+}
++ (FVPStartPictureInPictureMessage *)fromList:(NSArray<id> *)list {
+  FVPStartPictureInPictureMessage *pigeonResult = [[FVPStartPictureInPictureMessage alloc] init];
+  pigeonResult.textureId = [GetNullableObjectAtIndex(list, 0) integerValue];
+  return pigeonResult;
+}
++ (nullable FVPStartPictureInPictureMessage *)nullableFromList:(NSArray<id> *)list {
+  return (list) ? [FVPStartPictureInPictureMessage fromList:list] : nil;
+}
+- (NSArray<id> *)toList {
+  return @[
+    @(self.textureId),
+  ];
+}
+@end
+
+@implementation FVPStopPictureInPictureMessage
++ (instancetype)makeWithTextureId:(NSInteger )textureId {
+  FVPStopPictureInPictureMessage* pigeonResult = [[FVPStopPictureInPictureMessage alloc] init];
+  pigeonResult.textureId = textureId;
+  return pigeonResult;
+}
++ (FVPStopPictureInPictureMessage *)fromList:(NSArray<id> *)list {
+  FVPStopPictureInPictureMessage *pigeonResult = [[FVPStopPictureInPictureMessage alloc] init];
+  pigeonResult.textureId = [GetNullableObjectAtIndex(list, 0) integerValue];
+  return pigeonResult;
+}
++ (nullable FVPStopPictureInPictureMessage *)nullableFromList:(NSArray<id> *)list {
+  return (list) ? [FVPStopPictureInPictureMessage fromList:list] : nil;
+}
+- (NSArray<id> *)toList {
+  return @[
+    @(self.textureId),
+  ];
+}
+@end
+
 @implementation FVPTexturePlayerIds
 + (instancetype)makeWithPlayerId:(NSInteger )playerId
     textureId:(NSInteger )textureId {
@@ -129,6 +284,16 @@ static id GetNullableObjectAtIndex(NSArray<id> *array, NSInteger key) {
     case 130: 
       return [FVPCreationOptions fromList:[self readValue]];
     case 131: 
+      return [FVPAutomaticallyStartsPictureInPictureMessage fromList:[self readValue]];
+    case 132: 
+      return [FVPSetPictureInPictureOverlaySettingsMessage fromList:[self readValue]];
+    case 133: 
+      return [FVPPictureInPictureOverlaySettingsMessage fromList:[self readValue]];
+    case 134: 
+      return [FVPStartPictureInPictureMessage fromList:[self readValue]];
+    case 135: 
+      return [FVPStopPictureInPictureMessage fromList:[self readValue]];
+    case 136: 
       return [FVPTexturePlayerIds fromList:[self readValue]];
     default:
       return [super readValueOfType:type];
@@ -146,8 +311,23 @@ static id GetNullableObjectAtIndex(NSArray<id> *array, NSInteger key) {
   } else if ([value isKindOfClass:[FVPCreationOptions class]]) {
     [self writeByte:130];
     [self writeValue:[value toList]];
-  } else if ([value isKindOfClass:[FVPTexturePlayerIds class]]) {
+  } else if ([value isKindOfClass:[FVPAutomaticallyStartsPictureInPictureMessage class]]) {
     [self writeByte:131];
+    [self writeValue:[value toList]];
+  } else if ([value isKindOfClass:[FVPSetPictureInPictureOverlaySettingsMessage class]]) {
+    [self writeByte:132];
+    [self writeValue:[value toList]];
+  } else if ([value isKindOfClass:[FVPPictureInPictureOverlaySettingsMessage class]]) {
+    [self writeByte:133];
+    [self writeValue:[value toList]];
+  } else if ([value isKindOfClass:[FVPStartPictureInPictureMessage class]]) {
+    [self writeByte:134];
+    [self writeValue:[value toList]];
+  } else if ([value isKindOfClass:[FVPStopPictureInPictureMessage class]]) {
+    [self writeByte:135];
+    [self writeValue:[value toList]];
+  } else if ([value isKindOfClass:[FVPTexturePlayerIds class]]) {
+    [self writeByte:136];
     [self writeValue:[value toList]];
   } else {
     [super writeValue:value];
@@ -269,6 +449,23 @@ void SetUpFVPAVFoundationVideoPlayerApiWithSuffix(id<FlutterBinaryMessenger> bin
         NSString *arg_package = GetNullableObjectAtIndex(args, 1);
         FlutterError *error;
         NSString *output = [api fileURLForAssetWithName:arg_asset package:arg_package error:&error];
+        callback(wrapResult(output, error));
+      }];
+    } else {
+      [channel setMessageHandler:nil];
+    }
+  }
+  {
+    FlutterBasicMessageChannel *channel =
+      [[FlutterBasicMessageChannel alloc]
+        initWithName:[NSString stringWithFormat:@"%@%@", @"dev.flutter.pigeon.video_player_avfoundation.AVFoundationVideoPlayerApi.isPictureInPictureSupported", messageChannelSuffix]
+        binaryMessenger:binaryMessenger
+        codec:FVPGetMessagesCodec()];
+    if (api) {
+      NSCAssert([api respondsToSelector:@selector(isPictureInPictureSupported:)], @"FVPAVFoundationVideoPlayerApi api (%@) doesn't respond to @selector(isPictureInPictureSupported:)", api);
+      [channel setMessageHandler:^(id _Nullable message, FlutterReply callback) {
+        FlutterError *error;
+        NSNumber *output = [api isPictureInPictureSupported:&error];
         callback(wrapResult(output, error));
       }];
     } else {
@@ -437,6 +634,82 @@ void SetUpFVPVideoPlayerInstanceApiWithSuffix(id<FlutterBinaryMessenger> binaryM
       [channel setMessageHandler:^(id _Nullable message, FlutterReply callback) {
         FlutterError *error;
         [api disposeWithError:&error];
+        callback(wrapResult(nil, error));
+      }];
+    } else {
+      [channel setMessageHandler:nil];
+    }
+  }
+  {
+    FlutterBasicMessageChannel *channel =
+      [[FlutterBasicMessageChannel alloc]
+        initWithName:[NSString stringWithFormat:@"%@%@", @"dev.flutter.pigeon.video_player_avfoundation.VideoPlayerInstanceApi.setPictureInPictureOverlaySettings", messageChannelSuffix]
+        binaryMessenger:binaryMessenger
+        codec:FVPGetMessagesCodec()];
+    if (api) {
+      NSCAssert([api respondsToSelector:@selector(setPictureInPictureOverlaySettings:error:)], @"FVPVideoPlayerInstanceApi api (%@) doesn't respond to @selector(setPictureInPictureOverlaySettings:error:)", api);
+      [channel setMessageHandler:^(id _Nullable message, FlutterReply callback) {
+        NSArray<id> *args = message;
+        FVPSetPictureInPictureOverlaySettingsMessage *arg_msg = GetNullableObjectAtIndex(args, 0);
+        FlutterError *error;
+        [api setPictureInPictureOverlaySettings:arg_msg error:&error];
+        callback(wrapResult(nil, error));
+      }];
+    } else {
+      [channel setMessageHandler:nil];
+    }
+  }
+  {
+    FlutterBasicMessageChannel *channel =
+      [[FlutterBasicMessageChannel alloc]
+        initWithName:[NSString stringWithFormat:@"%@%@", @"dev.flutter.pigeon.video_player_avfoundation.VideoPlayerInstanceApi.setAutomaticallyStartsPictureInPicture", messageChannelSuffix]
+        binaryMessenger:binaryMessenger
+        codec:FVPGetMessagesCodec()];
+    if (api) {
+      NSCAssert([api respondsToSelector:@selector(setAutomaticallyStartsPictureInPicture:error:)], @"FVPVideoPlayerInstanceApi api (%@) doesn't respond to @selector(setAutomaticallyStartsPictureInPicture:error:)", api);
+      [channel setMessageHandler:^(id _Nullable message, FlutterReply callback) {
+        NSArray<id> *args = message;
+        FVPAutomaticallyStartsPictureInPictureMessage *arg_msg = GetNullableObjectAtIndex(args, 0);
+        FlutterError *error;
+        [api setAutomaticallyStartsPictureInPicture:arg_msg error:&error];
+        callback(wrapResult(nil, error));
+      }];
+    } else {
+      [channel setMessageHandler:nil];
+    }
+  }
+  {
+    FlutterBasicMessageChannel *channel =
+      [[FlutterBasicMessageChannel alloc]
+        initWithName:[NSString stringWithFormat:@"%@%@", @"dev.flutter.pigeon.video_player_avfoundation.VideoPlayerInstanceApi.startPictureInPicture", messageChannelSuffix]
+        binaryMessenger:binaryMessenger
+        codec:FVPGetMessagesCodec()];
+    if (api) {
+      NSCAssert([api respondsToSelector:@selector(startPictureInPicture:error:)], @"FVPVideoPlayerInstanceApi api (%@) doesn't respond to @selector(startPictureInPicture:error:)", api);
+      [channel setMessageHandler:^(id _Nullable message, FlutterReply callback) {
+        NSArray<id> *args = message;
+        FVPStartPictureInPictureMessage *arg_msg = GetNullableObjectAtIndex(args, 0);
+        FlutterError *error;
+        [api startPictureInPicture:arg_msg error:&error];
+        callback(wrapResult(nil, error));
+      }];
+    } else {
+      [channel setMessageHandler:nil];
+    }
+  }
+  {
+    FlutterBasicMessageChannel *channel =
+      [[FlutterBasicMessageChannel alloc]
+        initWithName:[NSString stringWithFormat:@"%@%@", @"dev.flutter.pigeon.video_player_avfoundation.VideoPlayerInstanceApi.stopPictureInPicture", messageChannelSuffix]
+        binaryMessenger:binaryMessenger
+        codec:FVPGetMessagesCodec()];
+    if (api) {
+      NSCAssert([api respondsToSelector:@selector(stopPictureInPicture:error:)], @"FVPVideoPlayerInstanceApi api (%@) doesn't respond to @selector(stopPictureInPicture:error:)", api);
+      [channel setMessageHandler:^(id _Nullable message, FlutterReply callback) {
+        NSArray<id> *args = message;
+        FVPStopPictureInPictureMessage *arg_msg = GetNullableObjectAtIndex(args, 0);
+        FlutterError *error;
+        [api stopPictureInPicture:arg_msg error:&error];
         callback(wrapResult(nil, error));
       }];
     } else {

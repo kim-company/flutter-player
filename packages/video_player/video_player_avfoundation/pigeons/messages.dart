@@ -32,6 +32,48 @@ class CreationOptions {
   Map<String, String> httpHeaders;
 }
 
+class AutomaticallyStartsPictureInPictureMessage {
+  AutomaticallyStartsPictureInPictureMessage(
+    this.textureId,
+    this.enableStartPictureInPictureAutomaticallyFromInline,
+  );
+  int textureId;
+  bool enableStartPictureInPictureAutomaticallyFromInline;
+}
+
+class SetPictureInPictureOverlaySettingsMessage {
+  SetPictureInPictureOverlaySettingsMessage(
+    this.textureId,
+    this.settings,
+  );
+  int textureId;
+  PictureInPictureOverlaySettingsMessage? settings;
+}
+
+class PictureInPictureOverlaySettingsMessage {
+  PictureInPictureOverlaySettingsMessage({
+    required this.top,
+    required this.left,
+    required this.width,
+    required this.height,
+  });
+  double top;
+  double left;
+  double width;
+  double height;
+}
+
+class StartPictureInPictureMessage {
+  StartPictureInPictureMessage(this.textureId);
+
+  int textureId;
+}
+
+class StopPictureInPictureMessage {
+  StopPictureInPictureMessage(this.textureId);
+  int textureId;
+}
+
 class TexturePlayerIds {
   TexturePlayerIds({required this.playerId, required this.textureId});
 
@@ -54,6 +96,8 @@ abstract class AVFoundationVideoPlayerApi {
   void setMixWithOthers(bool mixWithOthers);
   @ObjCSelector('fileURLForAssetWithName:package:')
   String? getAssetUrl(String asset, String? package);
+  @ObjCSelector('isPictureInPictureSupported')
+  bool isPictureInPictureSupported();
 }
 
 @HostApi()
@@ -74,4 +118,14 @@ abstract class VideoPlayerInstanceApi {
   void seekTo(int position);
   void pause();
   void dispose();
+  @ObjCSelector('setPictureInPictureOverlaySettings:')
+  void setPictureInPictureOverlaySettings(
+      SetPictureInPictureOverlaySettingsMessage msg);
+  @ObjCSelector('setAutomaticallyStartsPictureInPicture:')
+  void setAutomaticallyStartsPictureInPicture(
+      AutomaticallyStartsPictureInPictureMessage msg);
+  @ObjCSelector('startPictureInPicture:')
+  void startPictureInPicture(StartPictureInPictureMessage msg);
+  @ObjCSelector('stopPictureInPicture:')
+  void stopPictureInPicture(StopPictureInPictureMessage msg);
 }
