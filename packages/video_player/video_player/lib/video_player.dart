@@ -4,12 +4,12 @@
 
 import 'dart:async';
 import 'dart:io';
-import 'dart:math' as math show max;
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:video_player_platform_interface/video_player_platform_interface.dart';
+import 'package:video_player_platform_interface/video_player_platform_interface.dart'
+    as platform_interface;
 
 import 'src/closed_caption_file.dart';
 
@@ -24,6 +24,112 @@ export 'package:video_player_platform_interface/video_player_platform_interface.
         VideoViewType;
 
 export 'src/closed_caption_file.dart';
+
+/// Represents an audio track in a video with its metadata.
+@immutable
+class VideoAudioTrack {
+  /// Constructs an instance of [VideoAudioTrack].
+  const VideoAudioTrack({
+    required this.id,
+    required this.label,
+    required this.language,
+    required this.isSelected,
+    this.bitrate,
+    this.sampleRate,
+    this.channelCount,
+    this.codec,
+  });
+
+  /// Unique identifier for the audio track.
+  final String id;
+
+  /// Human-readable label for the track.
+  final String label;
+
+  /// Language code of the audio track (e.g., 'en', 'es', 'und').
+  final String language;
+
+  /// Whether this track is currently selected.
+  final bool isSelected;
+
+  /// Bitrate of the audio track in bits per second.
+  /// May be null if not available from the platform.
+  final int? bitrate;
+
+  /// Sample rate of the audio track in Hz.
+  /// May be null if not available from the platform.
+  final int? sampleRate;
+
+  /// Number of audio channels.
+  /// May be null if not available from the platform.
+  final int? channelCount;
+
+  /// Audio codec used (e.g., 'aac', 'mp3', 'ac3').
+  /// May be null if not available from the platform.
+  final String? codec;
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        other is VideoAudioTrack &&
+            runtimeType == other.runtimeType &&
+            id == other.id &&
+            label == other.label &&
+            language == other.language &&
+            isSelected == other.isSelected &&
+            bitrate == other.bitrate &&
+            sampleRate == other.sampleRate &&
+            channelCount == other.channelCount &&
+            codec == other.codec;
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    label,
+    language,
+    isSelected,
+    bitrate,
+    sampleRate,
+    channelCount,
+    codec,
+  );
+
+  @override
+  String toString() =>
+      'VideoAudioTrack('
+      'id: $id, '
+      'label: $label, '
+      'language: $language, '
+      'isSelected: $isSelected, '
+      'bitrate: $bitrate, '
+      'sampleRate: $sampleRate, '
+      'channelCount: $channelCount, '
+      'codec: $codec)';
+}
+
+/// Converts a platform interface [VideoAudioTrack] to the public API type.
+///
+/// This internal method is used to decouple the public API from the
+/// platform interface implementation.
+///
+/// Normalizes null values from the platform to provide a consistent API:
+/// - null label becomes 'Unknown'
+/// - null language becomes 'und' (undefined)
+VideoAudioTrack _convertPlatformAudioTrack(
+  platform_interface.VideoAudioTrack platformTrack,
+) {
+  return VideoAudioTrack(
+    id: platformTrack.id,
+    label: platformTrack.label ?? 'Unknown',
+    language: platformTrack.language ?? 'und',
+    isSelected: platformTrack.isSelected,
+    bitrate: platformTrack.bitrate,
+    sampleRate: platformTrack.sampleRate,
+    channelCount: platformTrack.channelCount,
+    codec: platformTrack.codec,
+  );
+}
 
 VideoPlayerPlatform? _lastVideoPlayerPlatform;
 
@@ -80,7 +186,7 @@ class VideoPlayerValue {
 
   /// The total duration of the video.
   ///
-  /// The value is only meaningful when [isInitialized] is true.
+  /// The duration is [Duration.zero] if the video hasn't been initialized.
   final Duration duration;
 
   /// The current playback position.
@@ -189,9 +295,10 @@ class VideoPlayerValue {
       volume: volume ?? this.volume,
       playbackSpeed: playbackSpeed ?? this.playbackSpeed,
       rotationCorrection: rotationCorrection ?? this.rotationCorrection,
-      errorDescription: errorDescription != _defaultErrorDescription
-          ? errorDescription
-          : this.errorDescription,
+      errorDescription:
+          errorDescription != _defaultErrorDescription
+              ? errorDescription
+              : this.errorDescription,
       isCompleted: isCompleted ?? this.isCompleted,
     );
   }
@@ -430,7 +537,7 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
     _lifeCycleObserver?.initialize();
     _creatingCompleter = Completer<void>();
 
-    final DataSource dataSourceDescription;
+    late DataSource dataSourceDescription;
     switch (dataSourceType) {
       case DataSourceType.asset:
         dataSourceDescription = DataSource(
@@ -458,7 +565,7 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
         );
     }
 
-    final creationOptions = VideoCreationOptions(
+    final VideoCreationOptions creationOptions = VideoCreationOptions(
       dataSource: dataSourceDescription,
       viewType: viewType,
     );
@@ -473,7 +580,7 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
         (await _videoPlayerPlatform.createWithOptions(creationOptions)) ??
         kUninitializedPlayerId;
     _creatingCompleter!.complete(null);
-    final initializingCompleter = Completer<void>();
+    final Completer<void> initializingCompleter = Completer<void>();
 
     // Apply the web-specific options
     if (kIsWeb && videoPlayerOptions?.webOptions != null) {
@@ -544,7 +651,7 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
     }
 
     void errorListener(Object obj) {
-      final e = obj as PlatformException;
+      final PlatformException e = obj as PlatformException;
       value = VideoPlayerValue.erroneous(e.message!);
       _timer?.cancel();
       if (!initializingCompleter.isCompleted) {
@@ -819,6 +926,63 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
     }
   }
 
+  /// Gets the available audio tracks for the video.
+  ///
+  /// Returns a list of [VideoAudioTrack] objects containing metadata about
+  /// each available audio track. The list may be empty if no audio tracks
+  /// are available or if the video is not initialized.
+  ///
+  /// Throws an exception if the video player is disposed.
+  Future<List<VideoAudioTrack>> getAudioTracks() async {
+    if (_isDisposed) {
+      throw Exception('VideoPlayerController is disposed');
+    }
+    if (!value.isInitialized) {
+      return <VideoAudioTrack>[];
+    }
+    final List<platform_interface.VideoAudioTrack> platformTracks =
+        await _videoPlayerPlatform.getAudioTracks(_playerId);
+    return platformTracks.map(_convertPlatformAudioTrack).toList();
+  }
+
+  /// Selects which audio track is chosen for playback from its [trackId]
+  ///
+  /// The [trackId] should match the ID of one of the tracks returned by
+  /// [getAudioTracks]. If the track ID is not found or invalid, the
+  /// platform may ignore the request or throw an exception.
+  ///
+  /// Throws an exception if the video player is disposed or not initialized.
+  Future<void> selectAudioTrack(String trackId) async {
+    if (_isDisposedOrNotInitialized) {
+      throw Exception('VideoPlayerController is disposed or not initialized');
+    }
+    // The platform implementation (e.g., Android) will wait for the track
+    // selection to complete by listening to platform-specific events
+    await _videoPlayerPlatform.selectAudioTrack(_playerId, trackId);
+  }
+
+  /// Returns whether audio track selection is supported on this platform.
+  ///
+  /// This method allows developers to query at runtime whether the current
+  /// platform supports audio track selection functionality. This is useful
+  /// for platforms like web where audio track selection may not be available.
+  ///
+  /// Returns `true` if [getAudioTracks] and [selectAudioTrack] are supported,
+  /// `false` otherwise.
+  ///
+  /// Example usage:
+  /// ```dart
+  /// if (controller.isAudioTrackSupportAvailable()) {
+  ///   final tracks = await controller.getAudioTracks();
+  ///   // Show audio track selection UI
+  /// } else {
+  ///   // Hide audio track selection UI or show unsupported message
+  /// }
+  /// ```
+  bool isAudioTrackSupportAvailable() {
+    return _videoPlayerPlatform.isAudioTrackSupportAvailable();
+  }
+
   bool get _isDisposedOrNotInitialized => _isDisposed || !value.isInitialized;
 }
 
@@ -863,15 +1027,20 @@ class VideoPlayer extends StatefulWidget {
 }
 
 class _VideoPlayerState extends State<VideoPlayer> {
-  late int _playerId;
-  void _controllerDidUpdateValue() {
-    final int newPlayerId = widget.controller.playerId;
-    if (newPlayerId != _playerId) {
-      setState(() {
-        _playerId = newPlayerId;
-      });
-    }
+  _VideoPlayerState() {
+    _listener = () {
+      final int newPlayerId = widget.controller.playerId;
+      if (newPlayerId != _playerId) {
+        setState(() {
+          _playerId = newPlayerId;
+        });
+      }
+    };
   }
+
+  late VoidCallback _listener;
+
+  late int _playerId;
 
   @override
   void initState() {
@@ -879,21 +1048,21 @@ class _VideoPlayerState extends State<VideoPlayer> {
     _playerId = widget.controller.playerId;
     // Need to listen for initialization events since the actual widget ID
     // becomes available after asynchronous initialization finishes.
-    widget.controller.addListener(_controllerDidUpdateValue);
+    widget.controller.addListener(_listener);
   }
 
   @override
   void didUpdateWidget(VideoPlayer oldWidget) {
     super.didUpdateWidget(oldWidget);
-    oldWidget.controller.removeListener(_controllerDidUpdateValue);
+    oldWidget.controller.removeListener(_listener);
     _playerId = widget.controller.playerId;
-    widget.controller.addListener(_controllerDidUpdateValue);
+    widget.controller.addListener(_listener);
   }
 
   @override
-  void dispose() {
-    widget.controller.removeListener(_controllerDidUpdateValue);
-    super.dispose();
+  void deactivate() {
+    super.deactivate();
+    widget.controller.removeListener(_listener);
   }
 
   @override
@@ -901,11 +1070,11 @@ class _VideoPlayerState extends State<VideoPlayer> {
     return _playerId == VideoPlayerController.kUninitializedPlayerId
         ? Container()
         : _VideoPlayerWithRotation(
-            rotation: widget.controller.value.rotationCorrection,
-            child: _videoPlayerPlatform.buildViewWithOptions(
-              VideoViewOptions(playerId: _playerId),
-            ),
-          );
+          rotation: widget.controller.value.rotationCorrection,
+          child: _videoPlayerPlatform.buildViewWithOptions(
+            VideoViewOptions(playerId: _playerId),
+          ),
+        );
   }
 }
 
@@ -995,7 +1164,7 @@ class _VideoScrubberState extends State<VideoScrubber> {
   @override
   Widget build(BuildContext context) {
     void seekToRelativePosition(Offset globalPosition) {
-      final box = context.findRenderObject()! as RenderBox;
+      final RenderBox box = context.findRenderObject()! as RenderBox;
       final Offset tapPos = box.globalToLocal(globalPosition);
       final double relative = tapPos.dx / box.size.width;
       final Duration position = controller.value.duration * relative;
@@ -1084,51 +1253,58 @@ class VideoProgressIndicator extends StatefulWidget {
 }
 
 class _VideoProgressIndicatorState extends State<VideoProgressIndicator> {
+  _VideoProgressIndicatorState() {
+    listener = () {
+      if (!mounted) {
+        return;
+      }
+      setState(() {});
+    };
+  }
+
+  late VoidCallback listener;
+
   VideoPlayerController get controller => widget.controller;
 
   VideoProgressColors get colors => widget.colors;
 
-  void _didUpdateControllerValue() {
-    setState(() {
-      // The build method reads from controller.value.
-    });
-  }
-
   @override
   void initState() {
     super.initState();
-    controller.addListener(_didUpdateControllerValue);
+    controller.addListener(listener);
   }
 
   @override
-  void dispose() {
-    controller.removeListener(_didUpdateControllerValue);
-    super.dispose();
+  void deactivate() {
+    controller.removeListener(listener);
+    super.deactivate();
   }
 
   @override
   Widget build(BuildContext context) {
-    final Widget progressIndicator;
+    Widget progressIndicator;
     if (controller.value.isInitialized) {
       final int duration = controller.value.duration.inMilliseconds;
       final int position = controller.value.position.inMilliseconds;
 
-      final double maxBuffering = duration == 0.0
-          ? 0.0
-          : controller.value.buffered
-                    .map((DurationRange range) => range.end.inMilliseconds)
-                    .fold(0, math.max) /
-                duration;
+      int maxBuffering = 0;
+      for (final DurationRange range in controller.value.buffered) {
+        final int end = range.end.inMilliseconds;
+        if (end > maxBuffering) {
+          maxBuffering = end;
+        }
+      }
+
       progressIndicator = Stack(
         fit: StackFit.passthrough,
         children: <Widget>[
           LinearProgressIndicator(
-            value: maxBuffering,
+            value: maxBuffering / duration,
             valueColor: AlwaysStoppedAnimation<Color>(colors.bufferedColor),
             backgroundColor: colors.backgroundColor,
           ),
           LinearProgressIndicator(
-            value: duration == 0.0 ? 0.0 : position / duration,
+            value: position / duration,
             valueColor: AlwaysStoppedAnimation<Color>(colors.playedColor),
             backgroundColor: Colors.transparent,
           ),
