@@ -21,8 +21,7 @@ class AVFoundationVideoPlayer extends VideoPlayerPlatform {
   /// Creates a new AVFoundation-based video player implementation instance.
   AVFoundationVideoPlayer({
     @visibleForTesting AVFoundationVideoPlayerApi? pluginApi,
-    @visibleForTesting
-    VideoPlayerInstanceApi Function(int playerId)? playerApiProvider,
+    @visibleForTesting VideoPlayerInstanceApi Function(int playerId)? playerApiProvider,
   }) : _api = pluginApi ?? AVFoundationVideoPlayerApi(),
        _playerApiProvider = playerApiProvider ?? _productionApiProvider;
 
@@ -71,9 +70,7 @@ class AVFoundationVideoPlayer extends VideoPlayerPlatform {
       case DataSourceType.asset:
         final String? asset = dataSource.asset;
         if (asset == null) {
-          throw ArgumentError(
-            '"asset" must be non-null for an asset data source',
-          );
+          throw ArgumentError('"asset" must be non-null for an asset data source');
         }
         uri = await _api.getAssetUrl(asset, dataSource.package);
         if (uri == null) {
@@ -235,6 +232,74 @@ class AVFoundationVideoPlayer extends VideoPlayerPlatform {
   }
 
   @override
+  Future<List<VideoAudioTrack>> getAudioTracks(int playerId) async {
+    final NativeAudioTrackData nativeData = await _playerWith(
+      id: playerId,
+    ).getAudioTracks();
+    final List<VideoAudioTrack> tracks = <VideoAudioTrack>[];
+
+    // Convert asset tracks to VideoAudioTrack
+    if (nativeData.assetTracks != null) {
+      for (final AssetAudioTrackData track in nativeData.assetTracks!) {
+        tracks.add(
+          VideoAudioTrack(
+            id: track.trackId.toString(),
+            label: track.label,
+            language: track.language,
+            isSelected: track.isSelected,
+            bitrate: track.bitrate,
+            sampleRate: track.sampleRate,
+            channelCount: track.channelCount,
+            codec: track.codec,
+          ),
+        );
+      }
+    }
+
+    // Convert media selection tracks to VideoAudioTrack (for HLS streams)
+    if (nativeData.mediaSelectionTracks != null) {
+      for (final MediaSelectionAudioTrackData track in nativeData.mediaSelectionTracks!) {
+        final String trackId = 'media_selection_${track.index}';
+        final String? label = track.commonMetadataTitle ?? track.displayName;
+        tracks.add(
+          VideoAudioTrack(
+            id: trackId,
+            label: label,
+            language: track.languageCode,
+            isSelected: track.isSelected,
+          ),
+        );
+      }
+    }
+
+    return tracks;
+  }
+
+  @override
+  Future<void> selectAudioTrack(int playerId, String trackId) {
+    // Parse the trackId to determine type and extract the integer ID
+    String trackType;
+    int numericTrackId;
+
+    if (trackId.startsWith('media_selection_')) {
+      trackType = 'mediaSelection';
+      numericTrackId = int.parse(trackId.substring('media_selection_'.length));
+    } else {
+      // Asset track - the trackId is just the integer as a string
+      trackType = 'asset';
+      numericTrackId = int.parse(trackId);
+    }
+
+    return _playerWith(id: playerId).selectAudioTrack(trackType, numericTrackId);
+  }
+
+  @override
+  bool isAudioTrackSupportAvailable() {
+    // iOS/macOS with AVFoundation supports audio track selection
+    return true;
+  }
+
+  @override
   Widget buildView(int playerId) {
     return buildViewWithOptions(VideoViewOptions(playerId: playerId));
   }
@@ -245,9 +310,7 @@ class AVFoundationVideoPlayer extends VideoPlayerPlatform {
     final VideoPlayerViewState viewState = _playerWith(id: playerId).viewState;
 
     return switch (viewState) {
-      VideoPlayerTextureViewState(:final int textureId) => Texture(
-        textureId: textureId,
-      ),
+      VideoPlayerTextureViewState(:final int textureId) => Texture(textureId: textureId),
       VideoPlayerPlatformViewState() => _buildPlatformView(playerId),
     };
   }
@@ -274,11 +337,8 @@ class AVFoundationVideoPlayer extends VideoPlayerPlatform {
 /// An instance of a video player, corresponding to a single player ID in
 /// [AVFoundationVideoPlayer].
 class _PlayerInstance {
-  _PlayerInstance(
-    this._api,
-    this.viewState, {
-    required EventChannel eventChannel,
-  }) : _eventChannel = eventChannel;
+  _PlayerInstance(this._api, this.viewState, {required EventChannel eventChannel})
+    : _eventChannel = eventChannel;
 
   final VideoPlayerInstanceApi _api;
   final VideoPlayerViewState viewState;
@@ -324,6 +384,11 @@ class _PlayerInstance {
 
   Future<void> stopPictureInPicture(StopPictureInPictureMessage msg) =>
       _api.stopPictureInPicture(msg);
+
+  Future<NativeAudioTrackData> getAudioTracks() => _api.getAudioTracks();
+
+  Future<void> selectAudioTrack(String trackType, int trackId) =>
+      _api.selectAudioTrack(trackType, trackId);
 
   Stream<VideoEvent> get videoEvents {
     _eventSubscription ??= _eventChannel.receiveBroadcastStream().listen(
