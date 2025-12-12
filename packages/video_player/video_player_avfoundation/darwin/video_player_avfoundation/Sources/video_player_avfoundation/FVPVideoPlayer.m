@@ -407,6 +407,10 @@ NS_INLINE CGFloat radiansToDegrees(CGFloat radians) {
   return @(FVPCMTimeToMillis(currentTime));
 }
 
+- (nullable NSNumber *)duration:(FlutterError *_Nullable *_Nonnull)error {
+  return @([self duration]);
+}
+
 - (nullable NSNumber *)isLive:(FlutterError *_Nullable *_Nonnull)error {
   return @([self isLive]);
 }

@@ -67,6 +67,8 @@ abstract class VideoPlayerInstanceApi {
   void play();
   @ObjCSelector('position')
   int getPosition();
+  @ObjCSelector('duration')
+  int getDuration();
   @ObjCSelector('isLive')
   bool getIsLive();
   @async

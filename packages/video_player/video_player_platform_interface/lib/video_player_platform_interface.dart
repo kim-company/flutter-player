@@ -100,6 +100,12 @@ abstract class VideoPlayerPlatform extends PlatformInterface {
     throw UnimplementedError('getPosition() has not been implemented.');
   }
 
+  /// Gets the video duration as [Duration].
+  /// For live streams, this returns the current seekable window duration.
+  Future<Duration> getDuration(int playerId) {
+    throw UnimplementedError('getDuration() has not been implemented.');
+  }
+
   /// Returns whether the video is a live stream.
   Future<bool> isLive(int playerId) {
     throw UnimplementedError('isLive() has not been implemented.');

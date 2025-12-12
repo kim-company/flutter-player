@@ -563,6 +563,8 @@ interface VideoPlayerInstanceApi {
   fun getCurrentPosition(): Long
   /** Returns the current buffer position, in milliseconds. */
   fun getBufferedPosition(): Long
+  /** Returns the current duration, in milliseconds. */
+  fun getDuration(): Long
   /** Returns whether the video is a live stream. */
   fun isLive(): Boolean
 
@@ -700,6 +702,21 @@ interface VideoPlayerInstanceApi {
           channel.setMessageHandler { _, reply ->
             val wrapped: List<Any?> = try {
               listOf(api.getBufferedPosition())
+            } catch (exception: Throwable) {
+              MessagesPigeonUtils.wrapError(exception)
+            }
+            reply.reply(wrapped)
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.video_player_android.VideoPlayerInstanceApi.getDuration$separatedMessageChannelSuffix", codec)
+        if (api != null) {
+          channel.setMessageHandler { _, reply ->
+            val wrapped: List<Any?> = try {
+              listOf(api.getDuration())
             } catch (exception: Throwable) {
               MessagesPigeonUtils.wrapError(exception)
             }

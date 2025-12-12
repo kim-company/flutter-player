@@ -115,6 +115,9 @@ abstract class VideoPlayerInstanceApi {
   /// Returns the current buffer position, in milliseconds.
   int getBufferedPosition();
 
+  /// Returns the current duration, in milliseconds.
+  int getDuration();
+
   /// Returns whether the video is a live stream.
   bool isLive();
 }
