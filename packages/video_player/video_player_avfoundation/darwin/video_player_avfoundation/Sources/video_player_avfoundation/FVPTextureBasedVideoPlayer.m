@@ -236,7 +236,7 @@ API_AVAILABLE(macos(10.15), ios(9.0))
       self.pictureInPictureController =
           [[AVPictureInPictureController alloc] initWithPlayerLayer:self.playerLayer];
       [self setAutomaticallyStartPictureInPicture:NO];
-      [self.pictureInPictureController setValue:[NSNumber numberWithInt:1] forKey:@"requiresLinearPlayback"];
+      [self.pictureInPictureController setValue:[NSNumber numberWithInt:1] forKey:@"controlsStyle"];
       _pictureInPictureController.delegate = self;
     }
   }
