@@ -30,6 +30,9 @@ import java.util.List;
  * <p>It provides methods to control playback, adjust volume, and handle seeking.
  */
 public abstract class VideoPlayer implements VideoPlayerInstanceApi {
+  // HLS buffer duration to exclude from reported duration (matches iOS behavior)
+  private static final long HLS_BUFFER_MS = 18000; // 18 seconds
+
   @NonNull protected final VideoPlayerCallbacks videoPlayerEvents;
   @Nullable protected final SurfaceProducer surfaceProducer;
   @Nullable private DisposeHandler disposeHandler;
@@ -131,6 +134,21 @@ public abstract class VideoPlayer implements VideoPlayerInstanceApi {
   @Override
   public long getBufferedPosition() {
     return exoPlayer.getBufferedPosition();
+  }
+
+  @Override
+  public long getDuration() {
+    // For HLS livestreams, the total duration includes the buffer.
+    // Subtract the HLS buffer to get the actual seekable duration.
+    if (exoPlayer.isCurrentMediaItemDynamic()) {
+      long totalDuration = exoPlayer.getDuration();
+      if (totalDuration != C.TIME_UNSET) {
+        return Math.max(0, totalDuration - HLS_BUFFER_MS);
+      }
+    }
+
+    // For non-live content, use the standard duration
+    return exoPlayer.getDuration();
   }
 
   @Override

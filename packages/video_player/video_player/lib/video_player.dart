@@ -777,6 +777,14 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
         if (newIsLive != value.isLive) {
           value = value.copyWith(isLive: newIsLive);
         }
+
+        // For live streams, update duration periodically as the seekable window changes
+        if (newIsLive) {
+          final Duration newDuration = await _videoPlayerPlatform.getDuration(_playerId);
+          if (newDuration != value.duration) {
+            value = value.copyWith(duration: newDuration);
+          }
+        }
       });
 
       // This ensures that the correct playback speed is always applied when

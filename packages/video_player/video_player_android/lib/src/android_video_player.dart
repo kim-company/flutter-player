@@ -198,6 +198,11 @@ class AndroidVideoPlayer extends VideoPlayerPlatform {
   }
 
   @override
+  Future<Duration> getDuration(int playerId) async {
+    return _playerWith(id: playerId).getDuration();
+  }
+
+  @override
   Future<bool> isLive(int playerId) async {
     return _playerWith(id: playerId).isLive();
   }
@@ -348,6 +353,10 @@ class _PlayerInstance {
 
   Future<Duration> getPosition() async {
     return Duration(milliseconds: await _api.getCurrentPosition());
+  }
+
+  Future<Duration> getDuration() async {
+    return Duration(milliseconds: await _api.getDuration());
   }
 
   Future<bool> isLive() async {
