@@ -773,6 +773,9 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
         _updatePosition(newPosition);
 
         // Check if isLive status has changed
+        if (_isDisposedOrNotInitialized) {
+          return;
+        }
         final bool newIsLive = await _videoPlayerPlatform.isLive(_playerId);
         if (newIsLive != value.isLive) {
           value = value.copyWith(isLive: newIsLive);
@@ -780,6 +783,9 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
 
         // For live streams, update duration periodically as the seekable window changes
         if (newIsLive) {
+          if (_isDisposedOrNotInitialized) {
+            return;
+          }
           final Duration newDuration = await _videoPlayerPlatform.getDuration(_playerId);
           if (newDuration != value.duration) {
             value = value.copyWith(duration: newDuration);
