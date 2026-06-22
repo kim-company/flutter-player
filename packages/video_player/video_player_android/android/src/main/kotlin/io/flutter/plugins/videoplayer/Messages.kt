@@ -1086,5 +1086,9 @@ abstract class VideoEventsStreamHandler : MessagesPigeonEventChannelWrapper<Plat
       EventChannel(messenger, channelName, MessagesPigeonMethodCodec).setStreamHandler(internalStreamHandler)
     }
   }
+  // Implement methods from MessagesPigeonEventChannelWrapper
+  override fun onListen(p0: Any?, sink: PigeonEventSink<PlatformVideoEvent>) {}
+
+  override fun onCancel(p0: Any?) {}
 }
       

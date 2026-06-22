@@ -1,6 +1,8 @@
 ## 2.9.0
 
 * Implements `getAudioTracks()` and `selectAudioTrack()` methods for Android using ExoPlayer.
+* (fork) Backports the Kotlin "bridge method" warning fix from
+  flutter/packages#10644 (Kotlin part only; generated Dart kept at Pigeon 26.1.2).
 
 ## 2.8.22
 
