@@ -8,6 +8,8 @@
 * (fork) Adds `preferSoftwareDecoder`, which builds the player on
   `MediaCodecSelector.PREFER_SOFTWARE` to recover from hardware decoders that
   fail while decoding a format they report as supported.
+* (fork) Reports the `PlaybackException` error code name and cause instead of
+  the exception class name, which R8 obfuscates in release builds.
 
 ## 2.8.22
 
