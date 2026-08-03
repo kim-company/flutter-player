@@ -71,11 +71,22 @@ class PlatformVideoViewCreationParams {
 }
 
 class CreationOptions {
-  CreationOptions({required this.uri, required this.httpHeaders});
+  CreationOptions({
+    required this.uri,
+    required this.httpHeaders,
+    required this.preferSoftwareDecoder,
+  });
   String uri;
   PlatformVideoFormat? formatHint;
   Map<String, String> httpHeaders;
   String? userAgent;
+
+  /// Whether software decoders should be tried before hardware ones.
+  ///
+  /// Decoder fallback only covers decoders that fail to initialize. A decoder
+  /// that initializes and then fails while decoding needs the player to be
+  /// rebuilt on a different decoder, which is what this option is for.
+  bool preferSoftwareDecoder;
 }
 
 class TexturePlayerIds {

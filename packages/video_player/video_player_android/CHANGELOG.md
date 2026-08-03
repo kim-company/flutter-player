@@ -3,6 +3,11 @@
 * Implements `getAudioTracks()` and `selectAudioTrack()` methods for Android using ExoPlayer.
 * (fork) Backports the Kotlin "bridge method" warning fix from
   flutter/packages#10644 (Kotlin part only; generated Dart kept at Pigeon 26.1.2).
+* (fork) Enables ExoPlayer decoder fallback, so a decoder that fails to
+  initialize no longer ends playback.
+* (fork) Adds `preferSoftwareDecoder`, which builds the player on
+  `MediaCodecSelector.PREFER_SOFTWARE` to recover from hardware decoders that
+  fail while decoding a format they report as supported.
 
 ## 2.8.22
 

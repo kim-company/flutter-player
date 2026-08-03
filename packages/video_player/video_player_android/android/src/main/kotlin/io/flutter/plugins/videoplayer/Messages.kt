@@ -307,7 +307,15 @@ data class CreationOptions (
   val uri: String,
   val formatHint: PlatformVideoFormat? = null,
   val httpHeaders: Map<String, String>,
-  val userAgent: String? = null
+  val userAgent: String? = null,
+  /**
+   * Whether software decoders should be tried before hardware ones.
+   *
+   * Decoder fallback only covers decoders that fail to initialize. A decoder
+   * that initializes and then fails while decoding needs the player to be
+   * rebuilt on a different decoder, which is what this option is for.
+   */
+  val preferSoftwareDecoder: Boolean
 )
  {
   companion object {
@@ -316,7 +324,8 @@ data class CreationOptions (
       val formatHint = pigeonVar_list[1] as PlatformVideoFormat?
       val httpHeaders = pigeonVar_list[2] as Map<String, String>
       val userAgent = pigeonVar_list[3] as String?
-      return CreationOptions(uri, formatHint, httpHeaders, userAgent)
+      val preferSoftwareDecoder = pigeonVar_list[4] as Boolean
+      return CreationOptions(uri, formatHint, httpHeaders, userAgent, preferSoftwareDecoder)
     }
   }
   fun toList(): List<Any?> {
@@ -325,6 +334,7 @@ data class CreationOptions (
       formatHint,
       httpHeaders,
       userAgent,
+      preferSoftwareDecoder,
     )
   }
   override fun equals(other: Any?): Boolean {
@@ -1086,9 +1096,5 @@ abstract class VideoEventsStreamHandler : MessagesPigeonEventChannelWrapper<Plat
       EventChannel(messenger, channelName, MessagesPigeonMethodCodec).setStreamHandler(internalStreamHandler)
     }
   }
-  // Implement methods from MessagesPigeonEventChannelWrapper
-  override fun onListen(p0: Any?, sink: PigeonEventSink<PlatformVideoEvent>) {}
-
-  override fun onCancel(p0: Any?) {}
 }
       

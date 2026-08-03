@@ -491,12 +491,23 @@ class VideoPlayerOptions {
   VideoPlayerOptions({
     this.mixWithOthers = false,
     this.allowBackgroundPlayback = false,
+    this.preferSoftwareDecoder = false,
     this.webOptions,
   });
 
   /// Set this to true to keep playing video in background, when app goes in background.
   /// The default value is false.
   final bool allowBackgroundPlayback;
+
+  /// Set this to true to try software decoders before hardware ones.
+  /// The default value is false.
+  ///
+  /// Useful as a recovery step on devices whose hardware decoder fails while
+  /// decoding a format it reports as supported. Software decoding costs more
+  /// battery and CPU, so this is not a good default.
+  ///
+  /// Note: This option is currently only implemented on Android.
+  final bool preferSoftwareDecoder;
 
   /// Set this to true to mix the video players audio with other audio sources.
   /// The default value is false
@@ -609,6 +620,7 @@ class VideoCreationOptions {
   const VideoCreationOptions({
     required this.dataSource,
     required this.viewType,
+    this.preferSoftwareDecoder = false,
   });
 
   /// The data source used to create the player.
@@ -616,6 +628,11 @@ class VideoCreationOptions {
 
   /// The type of view to be used for displaying the video player
   final VideoViewType viewType;
+
+  /// Whether software decoders should be tried before hardware ones.
+  ///
+  /// See [VideoPlayerOptions.preferSoftwareDecoder].
+  final bool preferSoftwareDecoder;
 }
 
 /// Represents an audio track in a video with its metadata.

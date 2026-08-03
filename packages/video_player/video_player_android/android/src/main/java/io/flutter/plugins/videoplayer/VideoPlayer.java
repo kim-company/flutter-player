@@ -7,6 +7,7 @@ package io.flutter.plugins.videoplayer;
 import static androidx.media3.common.Player.REPEAT_MODE_ALL;
 import static androidx.media3.common.Player.REPEAT_MODE_OFF;
 
+import android.content.Context;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.media3.common.AudioAttributes;
@@ -18,7 +19,10 @@ import androidx.media3.common.TrackGroup;
 import androidx.media3.common.TrackSelectionOverride;
 import androidx.media3.common.Tracks;
 import androidx.media3.common.util.UnstableApi;
+import androidx.media3.exoplayer.DefaultRenderersFactory;
 import androidx.media3.exoplayer.ExoPlayer;
+import androidx.media3.exoplayer.RenderersFactory;
+import androidx.media3.exoplayer.mediacodec.MediaCodecSelector;
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector;
 import io.flutter.view.TextureRegistry.SurfaceProducer;
 import java.util.ArrayList;
@@ -54,6 +58,35 @@ public abstract class VideoPlayer implements VideoPlayerInstanceApi {
   /** A handler to run when dispose is called. */
   public interface DisposeHandler {
     void onDispose();
+  }
+
+  /**
+   * Builds the renderers factory shared by every player subclass.
+   *
+   * <p>Decoder fallback is always on: some devices advertise support for a format (the renderer
+   * error then reports {@code format_supported=YES}) but fail to initialize their preferred
+   * decoder. Without fallback that is a fatal playback error instead of a retry on the next
+   * decoder in the list.
+   *
+   * <p>Fallback only covers initialization failures. A decoder that initializes and then fails
+   * while decoding raises {@code ERROR_CODE_DECODING_FAILED}, which is why callers can ask for
+   * {@code preferSoftwareDecoder} to rebuild the player on software decoders.
+   *
+   * @param context application context.
+   * @param preferSoftwareDecoder whether software decoders should be tried before hardware ones.
+   * @return the renderers factory to build the {@link ExoPlayer} with.
+   */
+  // TODO: Migrate to stable API, see https://github.com/flutter/flutter/issues/147039.
+  @UnstableApi
+  @NonNull
+  public static RenderersFactory buildRenderersFactory(
+      @NonNull Context context, boolean preferSoftwareDecoder) {
+    DefaultRenderersFactory renderersFactory =
+        new DefaultRenderersFactory(context).setEnableDecoderFallback(true);
+    if (preferSoftwareDecoder) {
+      renderersFactory.setMediaCodecSelector(MediaCodecSelector.PREFER_SOFTWARE);
+    }
+    return renderersFactory;
   }
 
   // TODO: Migrate to stable API, see https://github.com/flutter/flutter/issues/147039.

@@ -2,6 +2,8 @@
 
 * Adds `getAudioTracks()` and `selectAudioTrack()` methods to retrieve and select available audio tracks.
 * Updates minimum supported SDK version to Flutter 3.29/Dart 3.7.
+* (fork) Forwards `VideoPlayerOptions.preferSoftwareDecoder` to the platform
+  implementation.
 
 ## 2.10.0
 

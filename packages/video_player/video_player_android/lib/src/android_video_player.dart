@@ -114,6 +114,7 @@ class AndroidVideoPlayer extends VideoPlayerPlatform {
       httpHeaders: httpHeaders,
       userAgent: userAgent,
       formatHint: formatHint,
+      preferSoftwareDecoder: options.preferSoftwareDecoder,
     );
 
     final int playerId;

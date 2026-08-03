@@ -301,6 +301,7 @@ class CreationOptions {
     this.formatHint,
     required this.httpHeaders,
     this.userAgent,
+    required this.preferSoftwareDecoder,
   });
 
   String uri;
@@ -311,12 +312,20 @@ class CreationOptions {
 
   String? userAgent;
 
+  /// Whether software decoders should be tried before hardware ones.
+  ///
+  /// Decoder fallback only covers decoders that fail to initialize. A decoder
+  /// that initializes and then fails while decoding needs the player to be
+  /// rebuilt on a different decoder, which is what this option is for.
+  bool preferSoftwareDecoder;
+
   List<Object?> _toList() {
     return <Object?>[
       uri,
       formatHint,
       httpHeaders,
       userAgent,
+      preferSoftwareDecoder,
     ];
   }
 
@@ -330,6 +339,7 @@ class CreationOptions {
       formatHint: result[1] as PlatformVideoFormat?,
       httpHeaders: (result[2] as Map<Object?, Object?>?)!.cast<String, String>(),
       userAgent: result[3] as String?,
+      preferSoftwareDecoder: result[4]! as bool,
     );
   }
 

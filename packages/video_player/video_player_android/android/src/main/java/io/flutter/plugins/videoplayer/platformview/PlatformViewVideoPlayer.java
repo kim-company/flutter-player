@@ -41,6 +41,7 @@ public class PlatformViewVideoPlayer extends VideoPlayer {
    * @param events event callbacks.
    * @param asset asset to play.
    * @param options options for playback.
+   * @param preferSoftwareDecoder whether software decoders should be tried before hardware ones.
    * @return a video player instance.
    */
   // TODO: Migrate to stable API, see https://github.com/flutter/flutter/issues/147039.
@@ -50,7 +51,8 @@ public class PlatformViewVideoPlayer extends VideoPlayer {
       @NonNull Context context,
       @NonNull VideoPlayerCallbacks events,
       @NonNull VideoAsset asset,
-      @NonNull VideoPlayerOptions options) {
+      @NonNull VideoPlayerOptions options,
+      boolean preferSoftwareDecoder) {
     return new PlatformViewVideoPlayer(
         events,
         asset.getMediaItem(),
@@ -61,6 +63,8 @@ public class PlatformViewVideoPlayer extends VideoPlayer {
           ExoPlayer.Builder builder =
               new ExoPlayer.Builder(context)
                   .setTrackSelector(trackSelector)
+                  .setRenderersFactory(
+                      VideoPlayer.buildRenderersFactory(context, preferSoftwareDecoder))
                   .setMediaSourceFactory(asset.getMediaSourceFactory(context));
           return builder.build();
         });
