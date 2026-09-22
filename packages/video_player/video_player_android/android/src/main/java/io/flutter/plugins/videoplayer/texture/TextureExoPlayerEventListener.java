@@ -34,6 +34,11 @@ public final class TextureExoPlayerEventListener extends ExoPlayerEventListener 
     int width = videoSize.width;
     int height = videoSize.height;
     if (width != 0 && height != 0) {
+      // Anamorphic sources (e.g. 720x576 SD broadcast) encode non-square pixels.
+      if (videoSize.pixelWidthHeightRatio > 0f && videoSize.pixelWidthHeightRatio != 1f) {
+        width = Math.round(width * videoSize.pixelWidthHeightRatio);
+      }
+
       // When the SurfaceTexture backend for Impeller is used, the preview should already
       // be correctly rotated.
       if (!surfaceProducerHandlesCropAndRotation) {
