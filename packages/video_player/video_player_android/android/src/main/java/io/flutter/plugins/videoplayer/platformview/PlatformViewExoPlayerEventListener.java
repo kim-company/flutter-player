@@ -30,12 +30,20 @@ public final class PlatformViewExoPlayerEventListener extends ExoPlayerEventList
     int width = videoFormat.width;
     int height = videoFormat.height;
 
+    // Anamorphic sources (e.g. 720x576 SD broadcast) encode non-square pixels, so the coded
+    // size is not the display size. The bare SurfaceView applies no correction of its own.
+    float pixelWidthHeightRatio = videoFormat.pixelWidthHeightRatio;
+    if (pixelWidthHeightRatio > 0f && pixelWidthHeightRatio != 1f) {
+      width = Math.round(width * pixelWidthHeightRatio);
+    }
+
     // Switch the width/height if video was taken in portrait mode and a rotation
     // correction was detected.
     if (rotationCorrection == RotationDegrees.ROTATE_90
         || rotationCorrection == RotationDegrees.ROTATE_270) {
-      width = videoFormat.height;
-      height = videoFormat.width;
+      int tmp = width;
+      width = height;
+      height = tmp;
 
       rotationCorrection = RotationDegrees.fromDegrees(0);
     }
