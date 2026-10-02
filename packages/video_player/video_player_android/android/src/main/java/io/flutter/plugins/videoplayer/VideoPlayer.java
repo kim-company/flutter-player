@@ -22,6 +22,7 @@ import androidx.media3.common.util.UnstableApi;
 import androidx.media3.exoplayer.DefaultRenderersFactory;
 import androidx.media3.exoplayer.ExoPlayer;
 import androidx.media3.exoplayer.RenderersFactory;
+import androidx.media3.exoplayer.mediacodec.MediaCodecInfo;
 import androidx.media3.exoplayer.mediacodec.MediaCodecSelector;
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector;
 import io.flutter.view.TextureRegistry.SurfaceProducer;
@@ -72,6 +73,9 @@ public abstract class VideoPlayer implements VideoPlayerInstanceApi {
    * while decoding raises {@code ERROR_CODE_DECODING_FAILED}, which is why callers can ask for
    * {@code preferSoftwareDecoder} to rebuild the player on software decoders.
    *
+   * <p>The Android emulator's goldfish decoders are skipped, see {@link
+   * #withoutEmulatorDecoders(MediaCodecSelector)}.
+   *
    * @param context application context.
    * @param preferSoftwareDecoder whether software decoders should be tried before hardware ones.
    * @return the renderers factory to build the {@link ExoPlayer} with.
@@ -81,12 +85,41 @@ public abstract class VideoPlayer implements VideoPlayerInstanceApi {
   @NonNull
   public static RenderersFactory buildRenderersFactory(
       @NonNull Context context, boolean preferSoftwareDecoder) {
-    DefaultRenderersFactory renderersFactory =
-        new DefaultRenderersFactory(context).setEnableDecoderFallback(true);
-    if (preferSoftwareDecoder) {
-      renderersFactory.setMediaCodecSelector(MediaCodecSelector.PREFER_SOFTWARE);
-    }
-    return renderersFactory;
+    MediaCodecSelector selector =
+        preferSoftwareDecoder ? MediaCodecSelector.PREFER_SOFTWARE : MediaCodecSelector.DEFAULT;
+    return new DefaultRenderersFactory(context)
+        .setEnableDecoderFallback(true)
+        .setMediaCodecSelector(withoutEmulatorDecoders(selector));
+  }
+
+  /**
+   * Wraps a selector so that the Android emulator's goldfish decoders are only used as a last
+   * resort.
+   *
+   * <p>The goldfish decoders miss resolution changes in adaptive streams. When HLS steps up from
+   * 640x360 to 1280x720 they report no new output format and keep writing into the buffers of the
+   * old size, so only the top-left quarter of every frame is shown, with both the texture and the
+   * platform view. The emulator's software decoders handle the switch correctly. Real devices do
+   * not ship goldfish decoders, so this changes nothing outside the emulator.
+   *
+   * @param selector the selector to filter.
+   * @return a selector returning the same decoders, minus goldfish ones when alternatives exist.
+   */
+  // TODO: Migrate to stable API, see https://github.com/flutter/flutter/issues/147039.
+  @UnstableApi
+  @NonNull
+  public static MediaCodecSelector withoutEmulatorDecoders(@NonNull MediaCodecSelector selector) {
+    return (mimeType, requiresSecureDecoder, requiresTunnelingDecoder) -> {
+      List<MediaCodecInfo> decoders =
+          selector.getDecoderInfos(mimeType, requiresSecureDecoder, requiresTunnelingDecoder);
+      List<MediaCodecInfo> withoutEmulator = new ArrayList<>();
+      for (MediaCodecInfo decoder : decoders) {
+        if (!decoder.name.contains(".goldfish.")) {
+          withoutEmulator.add(decoder);
+        }
+      }
+      return withoutEmulator.isEmpty() ? decoders : withoutEmulator;
+    };
   }
 
   // TODO: Migrate to stable API, see https://github.com/flutter/flutter/issues/147039.

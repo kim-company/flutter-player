@@ -10,6 +10,10 @@
   fail while decoding a format they report as supported.
 * (fork) Reports the `PlaybackException` error code name and cause instead of
   the exception class name, which R8 obfuscates in release builds.
+* (fork) Skips the Android emulator's goldfish decoders whenever another
+  decoder can handle the format. They miss resolution changes in adaptive
+  streams, so after HLS stepped up from 640x360 to 1280x720 only the top-left
+  quarter of the video was shown.
 
 ## 2.8.22
 
