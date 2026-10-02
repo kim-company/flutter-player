@@ -595,6 +595,8 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
     final VideoCreationOptions creationOptions = VideoCreationOptions(
       dataSource: dataSourceDescription,
       viewType: viewType,
+      preferSoftwareDecoder:
+          videoPlayerOptions?.preferSoftwareDecoder ?? false,
     );
 
     if (videoPlayerOptions?.mixWithOthers != null) {

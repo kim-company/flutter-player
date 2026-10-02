@@ -83,7 +83,17 @@ public abstract class ExoPlayerEventListener implements Player.Listener {
       exoPlayer.seekToDefaultPosition();
       exoPlayer.prepare();
     } else {
-      events.onError("VideoError", "Video player had error " + error, null);
+      // The exception class name is obfuscated in release builds, so report the error code name
+      // and the cause instead. Those are what identify the failure (bad HTTP status, decoder
+      // failure, unsupported format, ...) and let the Dart side decide how to recover.
+      @Nullable Throwable cause = error.getCause();
+      String message =
+          "Video player had error "
+              + error.getErrorCodeName()
+              + ": "
+              + error.getMessage()
+              + (cause != null ? " (caused by " + cause + ")" : "");
+      events.onError("VideoError", message, null);
     }
   }
 

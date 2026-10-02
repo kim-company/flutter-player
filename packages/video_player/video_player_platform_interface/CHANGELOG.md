@@ -1,6 +1,8 @@
 ## NEXT
 
 * Updates minimum supported SDK version to Flutter 3.32/Dart 3.8.
+* (fork) Adds `preferSoftwareDecoder` to `VideoPlayerOptions` and
+  `VideoCreationOptions`. Android only, defaults to `false`.
 
 ## 6.6.0
 
